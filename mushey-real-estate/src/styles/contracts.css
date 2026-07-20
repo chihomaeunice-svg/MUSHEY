@@ -1,0 +1,193 @@
+/* contracts.css */
+
+.contracts-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.contract-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: border-color 0.2s;
+  margin-bottom: 12px;
+}
+
+.contract-card:hover { border-color: var(--border-soft); }
+
+.contract-card-main {
+  padding: 18px 20px;
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .contract-card-main { grid-template-columns: 1fr; }
+}
+
+.contract-tenant {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.contract-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--gold-dim);
+  border: 1px solid var(--gold-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+.contract-tenant-info .name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.contract-tenant-info .meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.contract-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: right;
+}
+
+.contract-dates .date-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-sub);
+  justify-content: flex-end;
+}
+
+.contract-dates .date-row span {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  width: 50px;
+}
+
+.contract-rent {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--gold);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.contract-rent small {
+  font-size: 10px;
+  color: var(--text-muted);
+  display: block;
+  font-family: var(--font-body);
+  font-weight: 400;
+}
+
+.contract-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* Expiry warning bar */
+.expiry-bar {
+  padding: 10px 20px;
+  background: var(--orange-dim);
+  border-top: 1px solid #f39c1220;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--orange);
+}
+
+.expiry-bar .icon { font-size: 14px; }
+
+/* Timeline progress */
+.contract-progress {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.progress-bar {
+  height: 4px;
+  background: var(--surface2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--gold);
+  transition: width 0.4s ease;
+}
+
+.progress-fill.warning { background: var(--orange); }
+.progress-fill.danger  { background: var(--red); }
+
+/* Group sections */
+.area-group {
+  margin-bottom: 28px;
+}
+
+.area-group-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.area-group-header h2 {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-sub);
+}
+
+.area-group-header .divider {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.area-group-header .area-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--surface2);
+  padding: 2px 8px;
+  border-radius: 99px;
+}

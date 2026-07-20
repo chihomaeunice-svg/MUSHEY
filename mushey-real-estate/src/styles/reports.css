@@ -1,0 +1,168 @@
+/* reports.css */
+
+.reports-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 28px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.period-selector {
+  display: flex;
+  gap: 6px;
+}
+
+.period-btn {
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border-soft);
+  background: var(--surface);
+  color: var(--text-sub);
+  transition: all 0.15s;
+}
+
+.period-btn:hover  { color: var(--text); border-color: var(--gold-dim); }
+.period-btn.active { background: var(--gold-dim); border-color: var(--gold-dim); color: var(--gold); }
+
+/* Profit overview */
+.profit-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.profit-metric {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.profit-metric::after {
+  content: attr(data-icon);
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 36px;
+  opacity: 0.07;
+}
+
+.profit-metric .metric-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.profit-metric .metric-value {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.profit-metric .metric-value.green  { color: var(--green); }
+.profit-metric .metric-value.gold   { color: var(--gold); }
+.profit-metric .metric-value.red    { color: var(--red); }
+
+.profit-metric .metric-change {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Area breakdown table */
+.area-breakdown {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.breakdown-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.breakdown-header h2 {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.breakdown-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr 80px;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+
+.breakdown-row:last-child { border-bottom: none; }
+.breakdown-row:hover { background: var(--surface2); }
+
+.breakdown-row.thead {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  padding: 10px 20px;
+  background: none;
+}
+
+.breakdown-row.thead:hover { background: none; }
+
+.area-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.area-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.collection-bar-cell {
+  padding-right: 20px;
+}
+
+.collection-mini-bar {
+  height: 6px;
+  background: var(--surface2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.collection-mini-fill {
+  height: 100%;
+  background: var(--gold);
+  border-radius: 99px;
+}
+
+.profit-cell {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.profit-cell.positive { color: var(--green); }
+.profit-cell.negative { color: var(--red); }
