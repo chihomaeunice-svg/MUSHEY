@@ -2,26 +2,30 @@
 import { useState, useEffect } from "react";
 import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
-import areas from "../data/areas";
+import { useCompany } from "../components/CompanyProvider";
+import RecordPaymentModal from "../components/RecordPaymentModal";
 import "../styles/payments.css";
 
+const FIELD_TYPE = { rentPaid: "rent", cleaningPaid: "cleaning", waterPaid: "water" };
+
 function Payments() {
+  const { membership, company } = useCompany();
+  const areas = company?.areas || [];
+
   const [properties, setProperties] = useState([]);
   const [loading, setLoading]       = useState(true);
   const [filterArea, setFilterArea] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [paymentModal, setPaymentModal] = useState(null); // { property, field, type }
 
-  useEffect(() => { loadProperties(); }, []);
+  useEffect(() => { loadProperties(); }, [membership?.companyId]);
 
   const loadProperties = async () => {
+    if (!membership?.companyId) return;
     setLoading(true);
     try {
-      let list = [];
-      for (const area of areas) {
-        const snap = await getDocs(collection(db, "areas", area, "properties"));
-        snap.forEach((d) => list.push({ id: d.id, area, ...d.data() }));
-      }
-      setProperties(list);
+      const snap = await getDocs(collection(db, "companies", membership.companyId, "properties"));
+      setProperties(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
     } catch (e) {
       console.error(e);
     } finally {
@@ -31,16 +35,23 @@ function Payments() {
 
   const toggle = async (p, field) => {
     const newVal = !p[field];
-    await updateDoc(doc(db, "areas", p.area, "properties", p.id), {
-      [field]: newVal,
-    });
-    setProperties((prev) =>
-      prev.map((item) =>
-        item.id === p.id && item.area === p.area
-          ? { ...item, [field]: newVal }
-          : item
-      )
-    );
+
+    // Marking as paid opens the payment/receipt modal instead of writing directly.
+    if (newVal) {
+      setPaymentModal({ property: p, field, type: FIELD_TYPE[field] });
+      return;
+    }
+
+    // Undo — no receipt needed to un-mark a mistaken entry.
+    await updateDoc(doc(db, "companies", membership.companyId, "properties", p.id), { [field]: false });
+    setProperties((prev) => prev.map((item) => item.id === p.id ? { ...item, [field]: false } : item));
+  };
+
+  const handleRecorded = async () => {
+    const { property, field } = paymentModal;
+    await updateDoc(doc(db, "companies", membership.companyId, "properties", property.id), { [field]: true });
+    setProperties((prev) => prev.map((item) => item.id === property.id ? { ...item, [field]: true } : item));
+    setPaymentModal(null);
   };
 
   const payStatus = (p) => {
@@ -144,12 +155,12 @@ function Payments() {
           {filtered.map((p) => {
             const status = payStatus(p);
             return (
-              <div className="payment-card" key={`${p.area}-${p.id}`}>
+              <div className="payment-card" key={p.id}>
                 <div className="payment-card-header">
                   <div className="tenant-info">
                     <div className="tenant-name">{p.tenantName || "Unknown"}</div>
                     <div className="property-tag">
-                      {p.id} · {p.area}
+                      {p.propertyName} · {p.area}
                     </div>
                   </div>
                   <span className={`badge ${status}`}>
@@ -229,6 +240,17 @@ function Payments() {
             );
           })}
         </div>
+      )}
+
+      {paymentModal && (
+        <RecordPaymentModal
+          companyId={membership.companyId}
+          company={company}
+          property={paymentModal.property}
+          type={paymentModal.type}
+          onClose={() => setPaymentModal(null)}
+          onRecorded={handleRecorded}
+        />
       )}
     </div>
   );

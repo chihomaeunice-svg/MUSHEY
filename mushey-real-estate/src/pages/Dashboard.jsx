@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
-import areas from "../data/areas";
+import { useCompany } from "../components/CompanyProvider";
 import "../styles/dashboard.css";
 
 const AREA_COLORS = [
@@ -11,6 +11,8 @@ const AREA_COLORS = [
 ];
 
 function Dashboard({ setCurrentPage }) {
+  const { membership, company } = useCompany();
+
   const [stats, setStats] = useState({
     totalProperties: 0,
     totalTenants: 0,
@@ -19,45 +21,45 @@ function Dashboard({ setCurrentPage }) {
   });
 
   const [areaData, setAreaData] = useState([]);
-  const [recentPayments, setRecentPayments] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadDashboard();
-  }, []);
+  }, [membership?.companyId]);
 
   const loadDashboard = async () => {
+    if (!membership?.companyId) return;
     try {
-      let totalProps = 0;
+      const snap = await getDocs(collection(db, "companies", membership.companyId, "properties"));
+      const allProps = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+      const areas = company?.areas || [...new Set(allProps.map((p) => p.area))];
+      const areaStats = [];
       let totalRent = 0;
       let paidCount = 0;
-      const areaStats = [];
 
       for (const area of areas) {
-        const snap = await getDocs(collection(db, "areas", area, "properties"));
-        const props = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        const props = allProps.filter((p) => p.area === area);
+        if (props.length === 0) continue;
 
         const areaRent = props.reduce((s, p) => s + (Number(p.rent) || 0), 0);
         const areaPaid = props.filter((p) => p.rentPaid === true).length;
 
-        totalProps += props.length;
-        totalRent  += areaRent;
-        paidCount  += areaPaid;
+        totalRent += areaRent;
+        paidCount += areaPaid;
 
-        if (props.length > 0) {
-          areaStats.push({
-            name: area,
-            count: props.length,
-            rent: areaRent,
-            paid: areaPaid,
-            unpaid: props.length - areaPaid,
-          });
-        }
+        areaStats.push({
+          name: area,
+          count: props.length,
+          rent: areaRent,
+          paid: areaPaid,
+          unpaid: props.length - areaPaid,
+        });
       }
 
       setStats({
-        totalProperties: totalProps,
-        totalTenants: totalProps,
+        totalProperties: allProps.length,
+        totalTenants: allProps.length,
         totalRent,
         paidThisMonth: paidCount,
       });
@@ -69,9 +71,6 @@ function Dashboard({ setCurrentPage }) {
       setLoading(false);
     }
   };
-
-  const fmt = (n) =>
-    Number(n).toLocaleString("en-TZ") + " TZS";
 
   if (loading) {
     return (
@@ -134,7 +133,7 @@ function Dashboard({ setCurrentPage }) {
           </div>
         ) : (
           <div className="areas-grid">
-            {areaData.map((area, i) => (
+            {areaData.map((area) => (
               <div className="area-card" key={area.name}>
                 <div className="area-card-header">
                   <h3>{area.name}</h3>

@@ -1,0 +1,104 @@
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.settings-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.settings-card-sub {
+  color: var(--text-sub);
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.settings-grid .form-group {
+  margin-bottom: 14px;
+}
+
+.settings-toggle-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  margin-top: 4px;
+}
+.settings-toggle-row input {
+  margin-top: 3px;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--gold);
+}
+.settings-toggle-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.settings-toggle-sub {
+  font-size: 12px;
+  color: var(--text-sub);
+  margin-top: 2px;
+}
+
+.settings-areas {
+  grid-column: 1 / -1;
+}
+
+.settings-area-add {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.settings-area-add input {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border-soft);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  outline: none;
+}
+
+.settings-area-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.settings-area-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border-soft);
+  color: var(--text);
+  padding: 6px 10px 6px 14px;
+  border-radius: 99px;
+  font-size: 12px;
+}
+.settings-area-chip button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 2px;
+}
+.settings-area-chip button:hover { color: var(--red); }
+
+.settings-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 24px;
+}
+.settings-saved {
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 600;
+}

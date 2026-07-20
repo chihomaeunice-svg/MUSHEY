@@ -1,6 +1,6 @@
 import { createContext, useEffect, useState } from "react";
 import { auth } from "../firebase/auth";
-import Login from "../pages/Login";
+import AuthGate from "./AuthGate";
 
 export const AuthContext = createContext(null);
 
@@ -19,7 +19,7 @@ export function AuthProvider({ children }) {
   if (!ready) return <div>Loading…</div>;
   return (
     <AuthContext.Provider value={user}>
-      {user ? children : <Login />}
+      {user ? children : <AuthGate />}
     </AuthContext.Provider>
   );
 }

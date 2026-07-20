@@ -1,0 +1,49 @@
+rules_version = '2';
+
+// Multi-tenant isolation: every company's data lives under
+// companies/{companyId}/... and only members of that company (matched via
+// their own users/{uid} record) or a platform superAdmin can touch it.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function myRecord() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isMember(companyId) {
+      return signedIn() && myRecord().companyId == companyId;
+    }
+
+    function isSuperAdmin() {
+      return signedIn() && myRecord().role == 'superAdmin';
+    }
+
+    // Membership record: a user may only ever create their OWN record, and
+    // only pointing at a company with the same id as their own uid — that
+    // matches the signup flow (companyId == ownerUid) and stops anyone from
+    // self-assigning membership into someone else's company. Adding staff to
+    // an existing company is a separate, trusted (server-side) operation.
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isSuperAdmin());
+      allow create: if signedIn() && request.auth.uid == uid
+                    && request.resource.data.companyId == uid;
+      allow update, delete: if false;
+    }
+
+    match /companies/{companyId} {
+      allow read: if isMember(companyId) || isSuperAdmin();
+      allow create: if signedIn() && request.auth.uid == companyId
+                    && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if isMember(companyId);
+      allow delete: if false;
+
+      match /{document=**} {
+        allow read, write: if isMember(companyId);
+      }
+    }
+  }
+}

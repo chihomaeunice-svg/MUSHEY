@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
-import areas from "../data/areas";
+import { useCompany } from "../components/CompanyProvider";
 import {
   contractTotalRevenue,
   contractMonths,
@@ -20,23 +20,27 @@ const COLORS = [
 ];
 
 function Reports() {
+  const { membership, company } = useCompany();
+
   const [areaReports, setAreaReports] = useState([]);
   const [allProps,    setAllProps]    = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [period,      setPeriod]      = useState(6);
 
-  useEffect(() => { loadReports(); }, []);
+  useEffect(() => { loadReports(); }, [membership?.companyId]);
 
   const loadReports = async () => {
+    if (!membership?.companyId) return;
     setLoading(true);
     try {
+      const snap = await getDocs(collection(db, "companies", membership.companyId, "properties"));
+      const allList = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const areas = company?.areas || [...new Set(allList.map((p) => p.area))];
+
       const results = [];
-      const allList = [];
 
       for (const area of areas) {
-        const snap = await getDocs(collection(db, "areas", area, "properties"));
-        const props = snap.docs.map((d) => ({ id: d.id, area, ...d.data() }));
-        allList.push(...props);
+        const props = allList.filter((p) => p.area === area);
         if (props.length === 0) continue;
 
         // Total contract value = rent × whole months in contract
@@ -267,7 +271,7 @@ function Reports() {
                 >
                   <div>
                     <div style={{ fontWeight:600, fontSize:13 }}>{p.tenantName || "—"}</div>
-                    <div style={{ color:"var(--text-muted)", fontSize:11 }}>{p.id}</div>
+                    <div style={{ color:"var(--text-muted)", fontSize:11 }}>{p.propertyName}</div>
                   </div>
                   <span style={{ fontSize:12, color:"var(--text-sub)" }}>{r.area}</span>
                   <span style={{ fontFamily:"var(--font-display)", fontWeight:700, color:"var(--gold)" }}>

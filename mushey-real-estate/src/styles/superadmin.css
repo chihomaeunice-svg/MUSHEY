@@ -1,0 +1,42 @@
+.superadmin {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+.sa-topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+.sa-topbar h1 {
+  font-size: 26px;
+  font-weight: 800;
+}
+.sa-topbar p {
+  color: var(--text-sub);
+  margin-top: 4px;
+  font-size: 14px;
+}
+
+.sa-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.sa-toolbar {
+  margin-bottom: 16px;
+}
+.sa-toolbar input {
+  width: 100%;
+  max-width: 360px;
+  background: var(--surface2);
+  border: 1px solid var(--border-soft);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  outline: none;
+}

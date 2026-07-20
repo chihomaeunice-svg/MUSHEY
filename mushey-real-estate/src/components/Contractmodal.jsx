@@ -40,7 +40,7 @@ export default function ContractModal({ contract, onClose }) {
           <div className="cm-avatar">{initials}</div>
           <div className="cm-header-info">
             <h2>{contract.tenantName || "Unknown Tenant"}</h2>
-            <p>{contract.id} &nbsp;·&nbsp; {contract.area} &nbsp;·&nbsp; {contract.type || "Property"}</p>
+            <p>{contract.propertyName} &nbsp;·&nbsp; {contract.area} &nbsp;·&nbsp; {contract.type || "Property"}</p>
           </div>
           <button className="cm-close" onClick={onClose}>✕</button>
         </div>
@@ -132,6 +132,29 @@ export default function ContractModal({ contract, onClose }) {
               ))}
             </div>
           </div>
+
+          {/* ID Verification */}
+          {contract.idNumber && (
+            <div className="cm-section">
+              <div className="cm-section-title">Tenant ID Verification</div>
+              <div className="cm-grid">
+                <div className="cm-field">
+                  <span className="cm-field-label">ID Type</span>
+                  <span className="cm-field-value">{contract.idType || "—"}</span>
+                </div>
+                <div className="cm-field">
+                  <span className="cm-field-label">ID Number</span>
+                  <span className="cm-field-value">{contract.idNumber}</span>
+                </div>
+                <div className="cm-field">
+                  <span className="cm-field-label">Status</span>
+                  <span className={`badge ${contract.idVerified ? "active" : "expiring"}`}>
+                    {contract.idVerified ? "✓ Verified" : "Unverified"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Notes */}
           {contract.notes && (

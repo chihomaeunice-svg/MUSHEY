@@ -1,0 +1,28 @@
+rules_version = '2';
+
+// Tenant ID photos and payment receipt photos are private per company.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isMember(companyId) {
+      return signedIn() &&
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.companyId == companyId;
+    }
+
+    function isSuperAdmin() {
+      return signedIn() &&
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'superAdmin';
+    }
+
+    match /companies/{companyId}/{allPaths=**} {
+      allow read: if isMember(companyId) || isSuperAdmin();
+      allow write: if isMember(companyId)
+                   && request.resource.size < 8 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

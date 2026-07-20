@@ -2,28 +2,28 @@
 import { useState, useEffect } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
-import areas from "../data/areas";
+import { useCompany } from "../components/CompanyProvider";
 import ContractModal from "../components/Contractmodal";
 import "../styles/contracts.css";
 
 function Contracts() {
+  const { membership, company } = useCompany();
+  const areas = company?.areas || [];
+
   const [contracts,     setContracts]     = useState([]);
   const [loading,       setLoading]       = useState(true);
   const [filterArea,    setFilterArea]    = useState("all");
   const [filterStatus,  setFilterStatus]  = useState("all");
   const [selected,      setSelected]      = useState(null);
 
-  useEffect(() => { loadContracts(); }, []);
+  useEffect(() => { loadContracts(); }, [membership?.companyId]);
 
   const loadContracts = async () => {
+    if (!membership?.companyId) return;
     setLoading(true);
     try {
-      let list = [];
-      for (const area of areas) {
-        const snap = await getDocs(collection(db, "areas", area, "properties"));
-        snap.forEach((d) => list.push({ id: d.id, area, ...d.data() }));
-      }
-      setContracts(list);
+      const snap = await getDocs(collection(db, "companies", membership.companyId, "properties"));
+      setContracts(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
     } catch (e) {
       console.error(e);
     } finally {
@@ -162,7 +162,7 @@ function Contracts() {
                       <div className="contract-avatar">{initials(c.tenantName)}</div>
                       <div className="contract-tenant-info">
                         <div className="name">{c.tenantName || "Unknown Tenant"}</div>
-                        <div className="meta">{c.id} · {c.type || "Property"} · {c.area}</div>
+                        <div className="meta">{c.propertyName} · {c.type || "Property"} · {c.area}</div>
                       </div>
                     </div>
 

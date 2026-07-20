@@ -4,9 +4,9 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
 import { logout } from "../firebase/auth";
 import { checkAndNotify } from "../utils/Notifications";
+import { useCompany } from "../components/CompanyProvider";
 import ExpiryBanner from "../components/ExpiryBanner";
 import NotificationPanel from "../components/Notificationpanel";
-import areas from "../data/areas";
 import "../styles/layout.css";
 
 const navItems = [
@@ -15,6 +15,7 @@ const navItems = [
   { icon: "📄", label: "Contracts",  page: "contracts" },
   { icon: "💳", label: "Payments",   page: "payments" },
   { icon: "📊", label: "Reports",    page: "reports" },
+  { icon: "⚙️", label: "Settings",   page: "settings" },
 ];
 
 const pageLabels = {
@@ -23,9 +24,11 @@ const pageLabels = {
   contracts:  "Contracts",
   payments:   "Payments",
   reports:    "Reports",
+  settings:   "Settings",
 };
 
 function Layout({ currentPage, setCurrentPage, children }) {
+  const { membership, company } = useCompany();
   const [allProperties, setAllProperties]   = useState([]);
   const [showNotifPanel, setShowNotifPanel] = useState(false);
 
@@ -34,26 +37,24 @@ function Layout({ currentPage, setCurrentPage, children }) {
   });
 
   useEffect(() => {
+    if (!membership?.companyId) return;
     const load = async () => {
       try {
-        let list = [];
-        for (const area of areas) {
-          const snap = await getDocs(collection(db, "areas", area, "properties"));
-          snap.forEach((d) => list.push({ id: d.id, area, ...d.data() }));
-        }
+        const snap = await getDocs(collection(db, "companies", membership.companyId, "properties"));
+        const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
         setAllProperties(list);
 
         // Fire email alerts for contracts within 14 days (throttled to once/week)
-        await checkAndNotify(list);
+        await checkAndNotify(membership.companyId, list, company?.notifyEmail);
       } catch (e) {
         console.error("Layout load error:", e);
       }
     };
     load();
-  }, []);
+  }, [membership?.companyId]);
 
   const handleLogout = async () => {
-    if (window.confirm("Sign out of Mushey Real Estate?")) {
+    if (window.confirm(`Sign out of ${company?.name || "Mushey Real Estate"}?`)) {
       await logout();
     }
   };
@@ -72,7 +73,7 @@ function Layout({ currentPage, setCurrentPage, children }) {
       <aside className="sidebar">
         <div className="sidebar-logo">
           <div className="logo-icon">🏢</div>
-          <h2>Mushey Real Estate</h2>
+          <h2>{company?.name || "Mushey Real Estate"}</h2>
           <span>Property Management</span>
         </div>
 

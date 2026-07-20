@@ -1,44 +1,48 @@
 // pages/Properties.jsx
 import { useState, useEffect } from "react";
 import {
-  doc, setDoc, collection, getDocs, deleteDoc, updateDoc,
+  doc, addDoc, updateDoc, collection, getDocs, deleteDoc,
 } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
-import areas from "../data/areas";
+import { useCompany } from "../components/CompanyProvider";
+import PhotoUpload from "../components/PhotoUpload";
 import "../styles/properties.css";
 
 const PROPERTY_TYPES = ["House", "Shop", "Warehouse", "Yard", "Open Space"];
+const ID_TYPES = ["National ID", "Passport", "Voter ID", "Driving License"];
 
 const emptyForm = {
   area: "", type: "", propertyName: "", tenantName: "",
   rent: "", contractStart: "", contractEnd: "", phone: "", notes: "",
+  idType: "", idNumber: "", idPhotoUrl: "",
 };
 
 function Properties() {
+  const { membership, company } = useCompany();
+  const areas = company?.areas || [];
+
   const [properties, setProperties] = useState([]);
   const [loading, setLoading]       = useState(true);
   const [showModal, setShowModal]   = useState(false);
   const [editMode, setEditMode]     = useState(false);
   const [editId, setEditId]         = useState(null);
-  const [editArea, setEditArea]     = useState(null);
   const [form, setForm]             = useState(emptyForm);
   const [search, setSearch]         = useState("");
   const [filterArea, setFilterArea] = useState("all");
   const [saving, setSaving]         = useState(false);
 
-  useEffect(() => { loadProperties(); }, []);
+  useEffect(() => { loadProperties(); }, [membership?.companyId]);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
+  const propertiesRef = () => collection(db, "companies", membership.companyId, "properties");
+
   const loadProperties = async () => {
+    if (!membership?.companyId) return;
     setLoading(true);
     try {
-      let list = [];
-      for (const area of areas) {
-        const snap = await getDocs(collection(db, "areas", area, "properties"));
-        snap.forEach((d) => list.push({ id: d.id, area, ...d.data() }));
-      }
-      setProperties(list);
+      const snap = await getDocs(propertiesRef());
+      setProperties(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
     } catch (e) {
       console.error(e);
     } finally {
@@ -54,14 +58,14 @@ function Properties() {
 
   const openEdit = (p) => {
     setForm({
-      area: p.area, type: p.type, propertyName: p.id,
+      area: p.area, type: p.type, propertyName: p.propertyName,
       tenantName: p.tenantName, rent: p.rent,
       contractStart: p.contractStart, contractEnd: p.contractEnd,
       phone: p.phone || "", notes: p.notes || "",
+      idType: p.idType || "", idNumber: p.idNumber || "", idPhotoUrl: p.idPhotoUrl || "",
     });
     setEditMode(true);
     setEditId(p.id);
-    setEditArea(p.area);
     setShowModal(true);
   };
 
@@ -73,23 +77,32 @@ function Properties() {
     setSaving(true);
     try {
       const data = {
+        area: form.area,
         type: form.type,
+        propertyName: form.propertyName,
         tenantName: form.tenantName,
         rent: form.rent,
         contractStart: form.contractStart,
         contractEnd: form.contractEnd,
         phone: form.phone,
         notes: form.notes,
-        status: "occupied",
-        rentPaid: false,
-        cleaningPaid: false,
-        waterPaid: false,
+        idType: form.idType,
+        idNumber: form.idNumber,
+        idPhotoUrl: form.idPhotoUrl,
       };
-      await setDoc(
-        doc(db, "areas", form.area, "properties", form.propertyName),
-        data,
-        { merge: editMode }
-      );
+
+      if (editMode) {
+        await updateDoc(doc(db, "companies", membership.companyId, "properties", editId), data);
+      } else {
+        await addDoc(propertiesRef(), {
+          ...data,
+          status: "occupied",
+          rentPaid: false,
+          cleaningPaid: false,
+          waterPaid: false,
+          idVerified: false,
+        });
+      }
       setShowModal(false);
       loadProperties();
     } catch (e) {
@@ -100,14 +113,21 @@ function Properties() {
   };
 
   const handleDelete = async (p) => {
-    if (!window.confirm(`Delete ${p.id} from ${p.area}?`)) return;
-    await deleteDoc(doc(db, "areas", p.area, "properties", p.id));
+    if (!window.confirm(`Delete ${p.propertyName}?`)) return;
+    await deleteDoc(doc(db, "companies", membership.companyId, "properties", p.id));
     loadProperties();
+  };
+
+  const toggleVerified = async (p) => {
+    await updateDoc(doc(db, "companies", membership.companyId, "properties", p.id), {
+      idVerified: !p.idVerified,
+    });
+    setProperties((prev) => prev.map((x) => x.id === p.id ? { ...x, idVerified: !p.idVerified } : x));
   };
 
   const filtered = properties.filter((p) => {
     const matchSearch =
-      p.id.toLowerCase().includes(search.toLowerCase()) ||
+      (p.propertyName || "").toLowerCase().includes(search.toLowerCase()) ||
       (p.tenantName || "").toLowerCase().includes(search.toLowerCase());
     const matchArea = filterArea === "all" || p.area === filterArea;
     return matchSearch && matchArea;
@@ -186,6 +206,7 @@ function Properties() {
                   <th>Property</th>
                   <th>Type</th>
                   <th>Tenant</th>
+                  <th>ID</th>
                   <th>Rent (TZS)</th>
                   <th>Contract End</th>
                   <th>Status</th>
@@ -194,11 +215,11 @@ function Properties() {
               </thead>
               <tbody>
                 {filtered.map((p) => (
-                  <tr key={`${p.area}-${p.id}`}>
+                  <tr key={p.id}>
                     <td>{p.area}</td>
                     <td>
                       <div className="tenant-cell">
-                        <span className="name">{p.id}</span>
+                        <span className="name">{p.propertyName}</span>
                       </div>
                     </td>
                     <td>{p.type || "—"}</td>
@@ -207,6 +228,18 @@ function Properties() {
                         <span className="name">{p.tenantName || "—"}</span>
                         {p.phone && <span className="area">{p.phone}</span>}
                       </div>
+                    </td>
+                    <td>
+                      {p.idNumber ? (
+                        <button
+                          className={`badge ${p.idVerified ? "active" : "expiring"}`}
+                          style={{ cursor: "pointer", border: "none" }}
+                          onClick={() => toggleVerified(p)}
+                          title="Click to toggle verified"
+                        >
+                          {p.idVerified ? "✓ Verified" : "Unverified"}
+                        </button>
+                      ) : "—"}
                     </td>
                     <td>
                       <span className="rent-cell">
@@ -241,7 +274,7 @@ function Properties() {
               <div className="form-row">
                 <div className="form-group">
                   <label>Area *</label>
-                  <select value={form.area} onChange={(e) => set("area", e.target.value)} disabled={editMode}>
+                  <select value={form.area} onChange={(e) => set("area", e.target.value)}>
                     <option value="">Select Area</option>
                     {areas.map((a) => <option key={a} value={a}>{a}</option>)}
                   </select>
@@ -261,7 +294,6 @@ function Properties() {
                   placeholder="e.g. House 1, Shop A"
                   value={form.propertyName}
                   onChange={(e) => set("propertyName", e.target.value)}
-                  disabled={editMode}
                 />
               </div>
 
@@ -283,6 +315,37 @@ function Properties() {
                   />
                 </div>
               </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Tenant ID Type</label>
+                  <select value={form.idType} onChange={(e) => set("idType", e.target.value)}>
+                    <option value="">Select ID Type</option>
+                    {ID_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Tenant ID Number</label>
+                  <input
+                    placeholder="ID number"
+                    value={form.idNumber}
+                    onChange={(e) => set("idNumber", e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {editMode ? (
+                <PhotoUpload
+                  storagePath={`companies/${membership.companyId}/properties/${editId}/id-photo`}
+                  currentUrl={form.idPhotoUrl}
+                  label="Tenant ID Photo"
+                  onUploaded={(url) => set("idPhotoUrl", url)}
+                />
+              ) : (
+                <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                  Save the property first, then reopen it here to attach an ID photo.
+                </p>
+              )}
 
               <div className="form-group">
                 <label>Monthly Rent (TZS)</label>

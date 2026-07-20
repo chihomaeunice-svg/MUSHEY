@@ -1,26 +1,20 @@
 // src/pages/Login.jsx
 import { useState } from "react";
-import { login, register } from "../firebase/auth";
+import { login } from "../firebase/auth";
 import "../styles/login.css";
 
-export default function Login() {
+export default function Login({ onSwitchToSignup }) {
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [error, setError]       = useState("");
   const [loading, setLoading]   = useState(false);
-  const [registering, setRegistering] = useState(false);
 
   const handleSubmit = async (evt) => {
     evt.preventDefault();
     setError("");
     setLoading(true);
     try {
-      if (registering) {
-        // create new user then sign in automatically
-        await register(email, password);
-      } else {
-        await login(email, password);
-      }
+      await login(email, password);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -100,13 +94,7 @@ export default function Login() {
 
             <button type="submit" className="login-btn" disabled={loading}>
               {loading && <span className="spinner" />}
-              {loading
-                ? registering
-                  ? "Creating…"
-                  : "Signing in…"
-                : registering
-                ? "Create account"
-                : "Sign in"}
+              {loading ? "Signing in…" : "Sign in"}
             </button>
 
             {error && (
@@ -117,21 +105,10 @@ export default function Login() {
           </form>
 
           <p className="login-toggle">
-            {registering ? (
-              <>
-                Already have an account?{' '}
-                <button type="button" onClick={() => setRegistering(false)}>
-                  Sign in
-                </button>
-              </>
-            ) : (
-              <>
-                Don't have an account?{' '}
-                <button type="button" onClick={() => setRegistering(true)}>
-                  Register
-                </button>
-              </>
-            )}
+            New landlord or company?{' '}
+            <button type="button" onClick={onSwitchToSignup}>
+              Register your company
+            </button>
           </p>
 
           <div className="login-divider">
@@ -139,7 +116,7 @@ export default function Login() {
           </div>
 
           <p className="login-footer-note">
-            Admin access only. Contact the system owner<br />if you need an account.
+            Each company's data is fully separate.<br />Staff accounts are added by your company owner.
           </p>
         </div>
       </div>
