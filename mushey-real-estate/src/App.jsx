@@ -7,6 +7,7 @@ import Contracts from "./pages/Contracts";
 import Payments from "./pages/Payments";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import Billing from "./pages/Billing";
 import SuperAdmin from "./pages/SuperAdmin";
 import { AuthProvider } from "./components/AuthProvider";
 import { CompanyProvider, useCompany } from "./components/CompanyProvider";
@@ -40,6 +41,7 @@ function Screens() {
       case "payments":   return <Payments />;
       case "reports":    return <Reports />;
       case "settings":   return <Settings />;
+      case "billing":    return <Billing />;
       default:           return <Dashboard setCurrentPage={setCurrentPage} />;
     }
   };

@@ -64,6 +64,7 @@ function Contracts() {
     (name || "?").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 
   const filtered = contracts.filter((c) => {
+    if (c.status === "vacant") return false; // no lease to show on an empty unit
     const areaOk   = filterArea   === "all" || c.area === filterArea;
     const statusOk = filterStatus === "all" || contractStatus(c.contractEnd) === filterStatus;
     return areaOk && statusOk;

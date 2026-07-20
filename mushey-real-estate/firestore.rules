@@ -38,7 +38,14 @@ service cloud.firestore {
       allow read: if isMember(companyId) || isSuperAdmin();
       allow create: if signedIn() && request.auth.uid == companyId
                     && request.resource.data.ownerUid == request.auth.uid;
-      allow update: if isMember(companyId);
+
+      // Subscription/billing fields are only ever written by Cloud Functions
+      // (Admin SDK, which bypasses these rules) — a company member can edit
+      // their other settings but never grant themselves an active/paid state.
+      allow update: if isMember(companyId)
+                    && !request.resource.data.diff(resource.data).affectedKeys()
+                         .hasAny(['subscriptionStatus', 'subscriptionAmount', 'currentPeriodEnd',
+                                  'paymentProvider', 'lastPaymentAt', 'ownerUid']);
       allow delete: if false;
 
       match /{document=**} {

@@ -6,6 +6,7 @@ import { logout } from "../firebase/auth";
 import { checkAndNotify } from "../utils/Notifications";
 import { useCompany } from "../components/CompanyProvider";
 import ExpiryBanner from "../components/ExpiryBanner";
+import SubscriptionBanner from "../components/SubscriptionBanner";
 import NotificationPanel from "../components/Notificationpanel";
 import "../styles/layout.css";
 
@@ -15,8 +16,13 @@ const navItems = [
   { icon: "📄", label: "Contracts",  page: "contracts" },
   { icon: "💳", label: "Payments",   page: "payments" },
   { icon: "📊", label: "Reports",    page: "reports" },
+  { icon: "💰", label: "Billing",    page: "billing" },
   { icon: "⚙️", label: "Settings",   page: "settings" },
 ];
+
+// Pages still reachable once a company's subscription is locked — enough to
+// pay and manage the account, nothing that manages tenants/properties.
+const ALLOWED_WHEN_LOCKED = ["billing", "settings"];
 
 const pageLabels = {
   dashboard:  "Dashboard",
@@ -24,6 +30,7 @@ const pageLabels = {
   contracts:  "Contracts",
   payments:   "Payments",
   reports:    "Reports",
+  billing:    "Billing",
   settings:   "Settings",
 };
 
@@ -32,9 +39,17 @@ function Layout({ currentPage, setCurrentPage, children }) {
   const [allProperties, setAllProperties]   = useState([]);
   const [showNotifPanel, setShowNotifPanel] = useState(false);
 
+  const locked = company?.subscriptionStatus === "locked";
+
   const today = new Date().toLocaleDateString("en-GB", {
     weekday: "short", day: "numeric", month: "short", year: "numeric",
   });
+
+  useEffect(() => {
+    if (locked && !ALLOWED_WHEN_LOCKED.includes(currentPage)) {
+      setCurrentPage("billing");
+    }
+  }, [locked, currentPage]);
 
   useEffect(() => {
     if (!membership?.companyId) return;
@@ -79,11 +94,16 @@ function Layout({ currentPage, setCurrentPage, children }) {
 
         <nav className="sidebar-nav">
           <div className="nav-section-label">Main Menu</div>
-          {navItems.map((item) => (
+          {navItems.map((item) => {
+            const disabled = locked && !ALLOWED_WHEN_LOCKED.includes(item.page);
+            return (
             <button
               key={item.page}
               className={`nav-link ${currentPage === item.page ? "active" : ""}`}
-              onClick={() => setCurrentPage(item.page)}
+              onClick={() => !disabled && setCurrentPage(item.page)}
+              disabled={disabled}
+              style={disabled ? { opacity: 0.4, cursor: "not-allowed" } : undefined}
+              title={disabled ? "Locked — pay your subscription to unlock" : undefined}
             >
               <span className="nav-icon">{item.icon}</span>
               {item.label}
@@ -91,7 +111,8 @@ function Layout({ currentPage, setCurrentPage, children }) {
                 <span className="nav-badge">{expiringCount}</span>
               )}
             </button>
-          ))}
+            );
+          })}
         </nav>
 
         <div className="sidebar-footer">
@@ -137,6 +158,10 @@ function Layout({ currentPage, setCurrentPage, children }) {
         </header>
 
         <main className="page-body">
+          <SubscriptionBanner
+            company={company}
+            onGoToBilling={() => setCurrentPage("billing")}
+          />
           <ExpiryBanner
             properties={allProperties}
             onReview={() => setCurrentPage("contracts")}

@@ -18,6 +18,7 @@ function Dashboard({ setCurrentPage }) {
     totalTenants: 0,
     totalRent: 0,
     paidThisMonth: 0,
+    vacantCount: 0,
   });
 
   const [areaData, setAreaData] = useState([]);
@@ -37,31 +38,38 @@ function Dashboard({ setCurrentPage }) {
       const areaStats = [];
       let totalRent = 0;
       let paidCount = 0;
+      let vacantCount = 0;
 
       for (const area of areas) {
         const props = allProps.filter((p) => p.area === area);
         if (props.length === 0) continue;
 
-        const areaRent = props.reduce((s, p) => s + (Number(p.rent) || 0), 0);
-        const areaPaid = props.filter((p) => p.rentPaid === true).length;
+        const occupied = props.filter((p) => p.status !== "vacant");
+        const areaRent = occupied.reduce((s, p) => s + (Number(p.rent) || 0), 0);
+        const areaPaid = occupied.filter((p) => p.rentPaid === true).length;
+        const areaVacant = props.length - occupied.length;
 
         totalRent += areaRent;
         paidCount += areaPaid;
+        vacantCount += areaVacant;
 
         areaStats.push({
           name: area,
           count: props.length,
+          vacant: areaVacant,
           rent: areaRent,
           paid: areaPaid,
-          unpaid: props.length - areaPaid,
+          unpaid: occupied.length - areaPaid,
         });
       }
 
+      const occupiedTotal = allProps.length - vacantCount;
       setStats({
         totalProperties: allProps.length,
-        totalTenants: allProps.length,
+        totalTenants: occupiedTotal,
         totalRent,
         paidThisMonth: paidCount,
+        vacantCount,
       });
 
       setAreaData(areaStats);
@@ -105,6 +113,16 @@ function Dashboard({ setCurrentPage }) {
           <div className="stat-value">{stats.totalTenants}</div>
           <div className="stat-sub">Currently occupied</div>
         </div>
+        <div className="stat-card" style={{ "--card-accent": "#e67e22" }}>
+          <span className="stat-icon">🔑</span>
+          <div className="stat-label">Vacant Units</div>
+          <div className="stat-value">{stats.vacantCount}</div>
+          <div className="stat-sub">
+            {stats.totalProperties > 0
+              ? Math.round((stats.vacantCount / stats.totalProperties) * 100)
+              : 0}% vacancy rate
+          </div>
+        </div>
         <div className="stat-card" style={{ "--card-accent": "#2ecc71" }}>
           <span className="stat-icon">💰</span>
           <div className="stat-label">Total Monthly Rent</div>
@@ -116,8 +134,8 @@ function Dashboard({ setCurrentPage }) {
           <div className="stat-label">Rent Paid</div>
           <div className="stat-value">{stats.paidThisMonth}</div>
           <div className="stat-sub">
-            {stats.totalProperties > 0
-              ? Math.round((stats.paidThisMonth / stats.totalProperties) * 100)
+            {stats.totalTenants > 0
+              ? Math.round((stats.paidThisMonth / stats.totalTenants) * 100)
               : 0}% collection rate
           </div>
         </div>
@@ -156,6 +174,12 @@ function Dashboard({ setCurrentPage }) {
                     <span className="label">Unpaid</span>
                     <span className="value red">{area.unpaid}</span>
                   </div>
+                  {area.vacant > 0 && (
+                    <div className="area-stat">
+                      <span className="label">Vacant</span>
+                      <span className="value" style={{ color: "var(--orange)" }}>{area.vacant}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

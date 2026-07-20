@@ -1,15 +1,20 @@
 // functions/index.js
 // Server-side notifications that fire on a real schedule (not just when
 // someone has the app open): contract-expiry reminders, a monthly rent-due
-// reminder, and an immediate "rent paid in full" email.
+// reminder, and an immediate "rent paid in full" notice — each one emails
+// the landlord (company.notifyEmail) AND texts the tenant (property.phone),
+// so both parties hear about it.
 //
 // Deploy with: firebase deploy --only functions
 // Requires the project to be on the Blaze (pay-as-you-go) plan.
 
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onDocumentUpdated } = require("firebase-functions/v2/firestore");
+const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 const { sendEmail } = require("./email");
+const { sendSms } = require("./sms");
+const subscriptions = require("./subscriptions");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -74,14 +79,21 @@ exports.dailyNotifications = onSchedule(
               html: `<p>Property <b>${p.propertyName}</b> (${p.area}) — tenant <b>${p.tenantName || "Unknown"}</b>.</p>
                      <p>Contract ends <b>${p.contractEnd}</b> (${daysLeft} day(s) left).</p>`,
             });
+            if (p.phone) {
+              await sendSms({
+                to: p.phone,
+                message: `Habari ${p.tenantName || ""}, mkataba wako wa ${p.propertyName} unaisha ${p.contractEnd} (siku ${daysLeft} zilizobaki). Wasiliana na mwenye nyumba.`,
+              });
+            }
             log[`sent_${triggerDay}d`] = today.toISOString();
             updated = true;
           }
         }
 
         // Rent-due reminder: once per month, in the final days of the
-        // month, if rent hasn't been marked paid yet.
-        if (!p.rentPaid && daysLeftInMonth(today) <= RENT_DUE_DAYS_BEFORE_MONTH_END) {
+        // month, if rent hasn't been marked paid yet. Skip vacant units —
+        // there's no tenant to owe rent.
+        if (p.status !== "vacant" && !p.rentPaid && daysLeftInMonth(today) <= RENT_DUE_DAYS_BEFORE_MONTH_END) {
           const mKey = `sent_rentdue_${monthKey(today)}`;
           if (!log[mKey]) {
             await sendEmail({
@@ -91,6 +103,12 @@ exports.dailyNotifications = onSchedule(
                      is not yet marked as paid and the month is ending soon.</p>
                      <p>Amount: <b>${Number(p.rent || 0).toLocaleString()} TZS</b>.</p>`,
             });
+            if (p.phone) {
+              await sendSms({
+                to: p.phone,
+                message: `Kumbusho: kodi ya ${p.propertyName} bado haijalipwa mwezi huu. Kiasi: ${Number(p.rent || 0).toLocaleString()} TZS.`,
+              });
+            }
             log[mKey] = today.toISOString();
             updated = true;
           }
@@ -121,5 +139,45 @@ exports.onRentPaid = onDocumentUpdated(
              has been marked as fully paid.</p>
              <p>Amount: <b>${Number(after.rent || 0).toLocaleString()} TZS</b>.</p>`,
     });
+
+    if (after.phone) {
+      await sendSms({
+        to: after.phone,
+        message: `Asante ${after.tenantName || ""}! Malipo ya kodi ya ${after.propertyName} yamepokelewa - ${Number(after.rent || 0).toLocaleString()} TZS.`,
+      });
+    }
+  }
+);
+
+/** Called from the app's Billing page to start a subscription payment. */
+exports.startSubscriptionCheckout = onCall(async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Sign in required.");
+
+  const userSnap = await db.doc(`users/${request.auth.uid}`).get();
+  const membership = userSnap.data();
+  if (!membership?.companyId) throw new HttpsError("failed-precondition", "No company membership found.");
+
+  const phoneNumber = request.data?.phoneNumber;
+  if (!phoneNumber) throw new HttpsError("invalid-argument", "phoneNumber is required.");
+
+  return subscriptions.startCheckout(db, { companyId: membership.companyId, phoneNumber });
+});
+
+/** ClickPesa (or whichever provider is active) posts payment results here. */
+exports.clickpesaWebhook = onRequest(async (req, res) => {
+  try {
+    await subscriptions.handleWebhook(db, "clickpesa", req.body, req.headers);
+    res.status(200).send("ok");
+  } catch (err) {
+    console.error("clickpesaWebhook error:", err);
+    res.status(400).send("error");
+  }
+});
+
+/** Runs once a day: moves lapsed companies trialing/active -> past_due -> locked. */
+exports.dailySubscriptionCheck = onSchedule(
+  { schedule: "30 7 * * *", timeZone: "Africa/Dar_es_Salaam" },
+  async () => {
+    await subscriptions.checkAllSubscriptions(db);
   }
 );

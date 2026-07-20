@@ -12,7 +12,7 @@ const PROPERTY_TYPES = ["House", "Shop", "Warehouse", "Yard", "Open Space"];
 const ID_TYPES = ["National ID", "Passport", "Voter ID", "Driving License"];
 
 const emptyForm = {
-  area: "", type: "", propertyName: "", tenantName: "",
+  area: "", type: "", propertyName: "", status: "occupied", tenantName: "",
   rent: "", contractStart: "", contractEnd: "", phone: "", notes: "",
   idType: "", idNumber: "", idPhotoUrl: "",
 };
@@ -29,6 +29,7 @@ function Properties() {
   const [form, setForm]             = useState(emptyForm);
   const [search, setSearch]         = useState("");
   const [filterArea, setFilterArea] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [saving, setSaving]         = useState(false);
 
   useEffect(() => { loadProperties(); }, [membership?.companyId]);
@@ -59,6 +60,7 @@ function Properties() {
   const openEdit = (p) => {
     setForm({
       area: p.area, type: p.type, propertyName: p.propertyName,
+      status: p.status || "occupied",
       tenantName: p.tenantName, rent: p.rent,
       contractStart: p.contractStart, contractEnd: p.contractEnd,
       phone: p.phone || "", notes: p.notes || "",
@@ -70,8 +72,12 @@ function Properties() {
   };
 
   const handleSave = async () => {
-    if (!form.area || !form.propertyName || !form.tenantName) {
-      alert("Area, Property Name, and Tenant Name are required.");
+    if (!form.area || !form.propertyName) {
+      alert("Area and Property Name are required.");
+      return;
+    }
+    if (form.status === "occupied" && !form.tenantName) {
+      alert("Tenant Name is required for an occupied property — or mark it Vacant instead.");
       return;
     }
     setSaving(true);
@@ -80,11 +86,12 @@ function Properties() {
         area: form.area,
         type: form.type,
         propertyName: form.propertyName,
-        tenantName: form.tenantName,
+        status: form.status,
+        tenantName: form.status === "vacant" ? "" : form.tenantName,
         rent: form.rent,
-        contractStart: form.contractStart,
-        contractEnd: form.contractEnd,
-        phone: form.phone,
+        contractStart: form.status === "vacant" ? "" : form.contractStart,
+        contractEnd: form.status === "vacant" ? "" : form.contractEnd,
+        phone: form.status === "vacant" ? "" : form.phone,
         notes: form.notes,
         idType: form.idType,
         idNumber: form.idNumber,
@@ -96,7 +103,6 @@ function Properties() {
       } else {
         await addDoc(propertiesRef(), {
           ...data,
-          status: "occupied",
           rentPaid: false,
           cleaningPaid: false,
           waterPaid: false,
@@ -130,8 +136,11 @@ function Properties() {
       (p.propertyName || "").toLowerCase().includes(search.toLowerCase()) ||
       (p.tenantName || "").toLowerCase().includes(search.toLowerCase());
     const matchArea = filterArea === "all" || p.area === filterArea;
-    return matchSearch && matchArea;
+    const matchStatus = filterStatus === "all" || (p.status || "occupied") === filterStatus;
+    return matchSearch && matchArea && matchStatus;
   });
+
+  const vacantCount = properties.filter((p) => p.status === "vacant").length;
 
   const daysLeft = (end) => {
     if (!end) return null;
@@ -175,6 +184,15 @@ function Properties() {
               <option key={a} value={a}>{a}</option>
             ))}
           </select>
+          <select
+            className="filter-select"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+          >
+            <option value="all">Occupied &amp; Vacant</option>
+            <option value="occupied">Occupied Only</option>
+            <option value="vacant">Vacant Only</option>
+          </select>
         </div>
         <button className="btn btn-primary" onClick={openAdd}>
           ＋ Add Property
@@ -186,6 +204,7 @@ function Properties() {
         <div className="table-header-bar">
           <h2>All Properties</h2>
           <span className="count-tag">{filtered.length} records</span>
+          {vacantCount > 0 && <span className="count-tag" style={{ color: "var(--orange)" }}>{vacantCount} vacant</span>}
         </div>
         <div className="table-scroll">
           {loading ? (
@@ -225,7 +244,7 @@ function Properties() {
                     <td>{p.type || "—"}</td>
                     <td>
                       <div className="tenant-cell">
-                        <span className="name">{p.tenantName || "—"}</span>
+                        <span className="name">{p.status === "vacant" ? <em style={{ color: "var(--text-muted)" }}>Vacant</em> : (p.tenantName || "—")}</span>
                         {p.phone && <span className="area">{p.phone}</span>}
                       </div>
                     </td>
@@ -246,8 +265,8 @@ function Properties() {
                         {Number(p.rent || 0).toLocaleString()}
                       </span>
                     </td>
-                    <td>{p.contractEnd || "—"}</td>
-                    <td>{contractStatus(p.contractEnd)}</td>
+                    <td>{p.status === "vacant" ? "—" : (p.contractEnd || "—")}</td>
+                    <td>{p.status === "vacant" ? <span className="badge expiring">Vacant</span> : contractStatus(p.contractEnd)}</td>
                     <td>
                       <div className="row-actions">
                         <button className="action-btn" onClick={() => openEdit(p)} title="Edit">✏️</button>
@@ -288,63 +307,91 @@ function Properties() {
                 </div>
               </div>
 
-              <div className="form-group">
-                <label>Property Name / Number *</label>
-                <input
-                  placeholder="e.g. House 1, Shop A"
-                  value={form.propertyName}
-                  onChange={(e) => set("propertyName", e.target.value)}
-                />
-              </div>
-
               <div className="form-row">
                 <div className="form-group">
-                  <label>Tenant Name *</label>
+                  <label>Property Name / Number *</label>
                   <input
-                    placeholder="Full name"
-                    value={form.tenantName}
-                    onChange={(e) => set("tenantName", e.target.value)}
+                    placeholder="e.g. House 1, Shop A"
+                    value={form.propertyName}
+                    onChange={(e) => set("propertyName", e.target.value)}
                   />
                 </div>
                 <div className="form-group">
-                  <label>Phone Number</label>
-                  <input
-                    placeholder="0712 345 678"
-                    value={form.phone}
-                    onChange={(e) => set("phone", e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Tenant ID Type</label>
-                  <select value={form.idType} onChange={(e) => set("idType", e.target.value)}>
-                    <option value="">Select ID Type</option>
-                    {ID_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                  <label>Occupancy Status</label>
+                  <select value={form.status} onChange={(e) => set("status", e.target.value)}>
+                    <option value="occupied">Occupied</option>
+                    <option value="vacant">Vacant</option>
                   </select>
                 </div>
-                <div className="form-group">
-                  <label>Tenant ID Number</label>
-                  <input
-                    placeholder="ID number"
-                    value={form.idNumber}
-                    onChange={(e) => set("idNumber", e.target.value)}
-                  />
-                </div>
               </div>
 
-              {editMode ? (
-                <PhotoUpload
-                  storagePath={`companies/${membership.companyId}/properties/${editId}/id-photo`}
-                  currentUrl={form.idPhotoUrl}
-                  label="Tenant ID Photo"
-                  onUploaded={(url) => set("idPhotoUrl", url)}
-                />
-              ) : (
-                <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                  Save the property first, then reopen it here to attach an ID photo.
+              {form.status === "vacant" ? (
+                <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
+                  Vacant units don't need tenant details — switch back to Occupied once it's rented out.
                 </p>
+              ) : (
+                <>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Tenant Name *</label>
+                      <input
+                        placeholder="Full name"
+                        value={form.tenantName}
+                        onChange={(e) => set("tenantName", e.target.value)}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Phone Number</label>
+                      <input
+                        placeholder="0712 345 678"
+                        value={form.phone}
+                        onChange={(e) => set("phone", e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Tenant ID Type</label>
+                      <select value={form.idType} onChange={(e) => set("idType", e.target.value)}>
+                        <option value="">Select ID Type</option>
+                        {ID_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Tenant ID Number</label>
+                      <input
+                        placeholder="ID number"
+                        value={form.idNumber}
+                        onChange={(e) => set("idNumber", e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  {editMode ? (
+                    <PhotoUpload
+                      storagePath={`companies/${membership.companyId}/properties/${editId}/id-photo`}
+                      currentUrl={form.idPhotoUrl}
+                      label="Tenant ID Photo"
+                      onUploaded={(url) => set("idPhotoUrl", url)}
+                    />
+                  ) : (
+                    <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                      Save the property first, then reopen it here to attach an ID photo.
+                    </p>
+                  )}
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Contract Start</label>
+                      <input type="date" value={form.contractStart} onChange={(e) => set("contractStart", e.target.value)} />
+                    </div>
+                    <div className="form-group">
+                      <label>Contract End</label>
+                      <input type="date" value={form.contractEnd} onChange={(e) => set("contractEnd", e.target.value)} />
+                    </div>
+                  </div>
+                </>
               )}
 
               <div className="form-group">
@@ -355,17 +402,6 @@ function Properties() {
                   value={form.rent}
                   onChange={(e) => set("rent", e.target.value)}
                 />
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Contract Start</label>
-                  <input type="date" value={form.contractStart} onChange={(e) => set("contractStart", e.target.value)} />
-                </div>
-                <div className="form-group">
-                  <label>Contract End</label>
-                  <input type="date" value={form.contractEnd} onChange={(e) => set("contractEnd", e.target.value)} />
-                </div>
               </div>
 
               <div className="form-group">

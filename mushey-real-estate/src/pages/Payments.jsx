@@ -61,6 +61,7 @@ function Payments() {
   };
 
   const filtered = properties.filter((p) => {
+    if (p.status === "vacant") return false; // nothing to collect on an empty unit
     const areaOk   = filterArea === "all" || p.area === filterArea;
     const statusOk = filterStatus === "all" || payStatus(p) === filterStatus;
     return areaOk && statusOk;

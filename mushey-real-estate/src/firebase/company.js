@@ -28,6 +28,9 @@ export async function registerCompany({ companyName, tin, phone, ownerName, emai
   const uid = cred.user.uid;
   const companyId = uid; // one owner per company at signup time; simplest stable id
 
+  const trialEnd = new Date();
+  trialEnd.setDate(trialEnd.getDate() + 14);
+
   const companyDoc = {
     name: companyName,
     tin: tin || "",
@@ -42,6 +45,13 @@ export async function registerCompany({ companyName, tin, phone, ownerName, emai
     requireReceiptUpload: false,
     receiptPrefix: (companyName || "MSH").slice(0, 3).toUpperCase(),
     nextReceiptNumber: 1,
+    // Subscription billing (companies/{companyId}) — these fields are only
+    // ever changed server-side (Cloud Functions) after this initial write;
+    // firestore.rules blocks clients from touching them afterward.
+    subscriptionStatus: "trialing",
+    subscriptionAmount: 35000,
+    currentPeriodEnd: trialEnd.toISOString().slice(0, 10),
+    paymentProvider: "clickpesa",
   };
 
   await setDoc(doc(db, "companies", companyId), companyDoc);
