@@ -285,3 +285,74 @@
   justify-content: center;
   border: 1.5px solid var(--bg);
 }
+
+/* ── Mobile menu toggle (hidden on desktop) ── */
+.hamburger-btn {
+  display: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 16px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.hamburger-btn:hover { background: var(--gold-dim); border-color: var(--gold-dim); }
+
+.sidebar-backdrop {
+  display: none;
+}
+
+/* ── Responsive: collapse the sidebar into an off-canvas drawer ── */
+@media (max-width: 900px) {
+  .hamburger-btn {
+    display: flex;
+  }
+
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    z-index: 100;
+    box-shadow: 0 0 0 100vmax transparent; /* keeps stacking context simple */
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: var(--shadow);
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: #00000080;
+    z-index: 90;
+  }
+
+  .topbar {
+    padding: 0 16px;
+    gap: 10px;
+  }
+
+  .topbar-left .breadcrumb {
+    display: none;
+  }
+
+  .topbar-right {
+    gap: 10px;
+  }
+
+  .topbar-right .date-tag {
+    display: none;
+  }
+
+  .page-body {
+    padding: 16px;
+  }
+}

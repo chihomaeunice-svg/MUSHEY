@@ -38,6 +38,7 @@ function Layout({ currentPage, setCurrentPage, children }) {
   const { membership, company } = useCompany();
   const [allProperties, setAllProperties]   = useState([]);
   const [showNotifPanel, setShowNotifPanel] = useState(false);
+  const [sidebarOpen, setSidebarOpen]       = useState(false);
 
   const locked = company?.subscriptionStatus === "locked";
 
@@ -84,8 +85,13 @@ function Layout({ currentPage, setCurrentPage, children }) {
   return (
     <div className="app-layout">
 
+      {/* Mobile backdrop — tap outside the drawer to close it */}
+      {sidebarOpen && (
+        <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />
+      )}
+
       {/* ── SIDEBAR ── */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
         <div className="sidebar-logo">
           <div className="logo-icon">🏢</div>
           <h2>{company?.name || "Mushey Real Estate"}</h2>
@@ -100,7 +106,7 @@ function Layout({ currentPage, setCurrentPage, children }) {
             <button
               key={item.page}
               className={`nav-link ${currentPage === item.page ? "active" : ""}`}
-              onClick={() => !disabled && setCurrentPage(item.page)}
+              onClick={() => { if (!disabled) { setCurrentPage(item.page); setSidebarOpen(false); } }}
               disabled={disabled}
               style={disabled ? { opacity: 0.4, cursor: "not-allowed" } : undefined}
               title={disabled ? "Locked — pay your subscription to unlock" : undefined}
@@ -127,6 +133,13 @@ function Layout({ currentPage, setCurrentPage, children }) {
       <div className="main-content">
         <header className="topbar">
           <div className="topbar-left">
+            <button
+              className="hamburger-btn"
+              onClick={() => setSidebarOpen((v) => !v)}
+              aria-label="Toggle menu"
+            >
+              ☰
+            </button>
             <span className="breadcrumb">
               Admin / <span>{pageLabels[currentPage]}</span>
             </span>
