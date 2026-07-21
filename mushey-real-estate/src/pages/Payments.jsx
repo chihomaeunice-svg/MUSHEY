@@ -1,6 +1,10 @@
 // pages/Payments.jsx
 import { useState, useEffect } from "react";
 import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
+import {
+  CheckCircle, WarningCircle, XCircle, Buildings, CreditCard,
+  House, Broom, Drop, Check,
+} from "@phosphor-icons/react";
 import { db } from "../firebase/firebaseConfig";
 import { useCompany } from "../components/CompanyProvider";
 import RecordPaymentModal from "../components/RecordPaymentModal";
@@ -109,16 +113,16 @@ function Payments() {
       <div className="payments-filters">
         {[
           { k: "all", label: "All" },
-          { k: "paid", label: "✅ Fully Paid" },
-          { k: "partial", label: "⚠️ Partial" },
-          { k: "unpaid", label: "❌ Unpaid" },
+          { k: "paid", label: "Fully Paid", icon: CheckCircle },
+          { k: "partial", label: "Partial", icon: WarningCircle },
+          { k: "unpaid", label: "Unpaid", icon: XCircle },
         ].map((f) => (
           <button
             key={f.k}
             className={`filter-tab ${filterStatus === f.k ? "active" : ""}`}
             onClick={() => setFilterStatus(f.k)}
           >
-            {f.label}
+            {f.icon && <f.icon size={13} weight="fill" />} {f.label}
           </button>
         ))}
 
@@ -133,7 +137,6 @@ function Payments() {
             color: "var(--text)",
             padding: "7px 14px",
             borderRadius: "var(--radius)",
-            outline: "none",
           }}
         >
           <option value="all">All Areas</option>
@@ -143,12 +146,12 @@ function Payments() {
 
       {loading ? (
         <div className="empty-state">
-          <div className="icon">⏳</div>
+          <div className="icon"><Buildings size={40} weight="thin" /></div>
           <p>Loading payments…</p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="empty-state">
-          <div className="icon">💳</div>
+          <div className="icon"><CreditCard size={40} weight="thin" /></div>
           <p>No payment records found.</p>
         </div>
       ) : (
@@ -165,7 +168,11 @@ function Payments() {
                     </div>
                   </div>
                   <span className={`badge ${status}`}>
-                    {status === "paid" ? "✅ Paid" : status === "partial" ? "⚠️ Partial" : "❌ Unpaid"}
+                    {status === "paid"
+                      ? <><CheckCircle size={11} weight="fill" /> Paid</>
+                      : status === "partial"
+                        ? <><WarningCircle size={11} weight="fill" /> Partial</>
+                        : <><XCircle size={11} weight="fill" /> Unpaid</>}
                   </span>
                 </div>
 
@@ -177,10 +184,11 @@ function Payments() {
                         className={`check-toggle ${p.rentPaid ? "checked" : ""}`}
                         onClick={() => toggle(p, "rentPaid")}
                         title="Toggle Rent Paid"
+                        aria-label="Toggle rent paid"
                       >
-                        {p.rentPaid ? "✓" : ""}
+                        {p.rentPaid ? <Check size={12} weight="bold" /> : ""}
                       </button>
-                      <span className="check-label">🏠 Rent</span>
+                      <span className="check-label"><House size={14} weight="regular" /> Rent</span>
                     </div>
                     <span style={{
                       fontFamily: "var(--font-display)",
@@ -199,10 +207,11 @@ function Payments() {
                         className={`check-toggle ${p.cleaningPaid ? "checked" : ""}`}
                         onClick={() => toggle(p, "cleaningPaid")}
                         title="Toggle Cleaning Paid"
+                        aria-label="Toggle cleaning paid"
                       >
-                        {p.cleaningPaid ? "✓" : ""}
+                        {p.cleaningPaid ? <Check size={12} weight="bold" /> : ""}
                       </button>
-                      <span className="check-label">🧹 Cleanliness</span>
+                      <span className="check-label"><Broom size={14} weight="regular" /> Cleanliness</span>
                     </div>
                     <span className="badge" style={{
                       background: p.cleaningPaid ? "var(--green-dim)" : "var(--red-dim)",
@@ -219,10 +228,11 @@ function Payments() {
                         className={`check-toggle ${p.waterPaid ? "checked" : ""}`}
                         onClick={() => toggle(p, "waterPaid")}
                         title="Toggle Water Paid"
+                        aria-label="Toggle water paid"
                       >
-                        {p.waterPaid ? "✓" : ""}
+                        {p.waterPaid ? <Check size={12} weight="bold" /> : ""}
                       </button>
-                      <span className="check-label">💧 Dirty Water Collection</span>
+                      <span className="check-label"><Drop size={14} weight="regular" /> Dirty Water Collection</span>
                     </div>
                     <span className="badge" style={{
                       background: p.waterPaid ? "var(--green-dim)" : "var(--red-dim)",

@@ -1,6 +1,9 @@
 // pages/Reports.jsx
 import { useState, useEffect } from "react";
 import { collection, getDocs } from "firebase/firestore";
+import {
+  CheckCircle, WarningCircle, House, CalendarBlank, TrendUp, Buildings, ChartBar,
+} from "@phosphor-icons/react";
 import { db } from "../firebase/firebaseConfig";
 import { useCompany } from "../components/CompanyProvider";
 import {
@@ -15,8 +18,8 @@ import {
 import "../styles/reports.css";
 
 const COLORS = [
-  "#d4a843","#3498db","#2ecc71","#e74c3c","#9b59b6",
-  "#f39c12","#1abc9c","#e67e22","#e91e63","#00bcd4",
+  "#b5573a","#3a6ea5","#3f7d5c","#c1443a","#8e6ba8",
+  "#c98a34","#3f9a8f","#c9793a","#b5457a","#3a95a5",
 ];
 
 function Reports() {
@@ -117,7 +120,8 @@ function Reports() {
       {/* Top metrics */}
       <div className="profit-overview">
 
-        <div className="profit-metric" data-icon="✅">
+        <div className="profit-metric">
+          <CheckCircle className="metric-icon" size={40} weight="fill" />
           <div className="metric-label">Collected This Month</div>
           <div className="metric-value green">{fmtTZS(totalCollected)}</div>
           <div className="metric-change">
@@ -125,7 +129,8 @@ function Reports() {
           </div>
         </div>
 
-        <div className="profit-metric" data-icon="⚠️">
+        <div className="profit-metric">
+          <WarningCircle className="metric-icon" size={40} weight="fill" />
           <div className="metric-label">Still Owed This Month</div>
           <div className="metric-value red">{fmtTZS(totalOutstanding)}</div>
           <div className="metric-change">
@@ -133,7 +138,8 @@ function Reports() {
           </div>
         </div>
 
-        <div className="profit-metric" data-icon="🏠">
+        <div className="profit-metric">
+          <House className="metric-icon" size={40} weight="fill" />
           <div className="metric-label">Total Monthly Rent</div>
           <div className="metric-value">{fmtTZS(totalMonthly)}</div>
           <div className="metric-change">
@@ -141,7 +147,8 @@ function Reports() {
           </div>
         </div>
 
-        <div className="profit-metric" data-icon="📅">
+        <div className="profit-metric">
+          <CalendarBlank className="metric-icon" size={40} weight="fill" />
           <div className="metric-label">Next {period} Months (if full)</div>
           <div className="metric-value gold">{fmtTZS(periodRevenue)}</div>
           <div className="metric-change">
@@ -149,7 +156,8 @@ function Reports() {
           </div>
         </div>
 
-        <div className="profit-metric" data-icon="📈">
+        <div className="profit-metric">
+          <TrendUp className="metric-icon" size={40} weight="fill" />
           <div className="metric-label">Full Year {new Date().getFullYear()} Income</div>
           <div className="metric-value gold">{fmtTZS(yearRevenue)}</div>
           <div className="metric-change">
@@ -176,9 +184,9 @@ function Reports() {
         </div>
 
         {loading ? (
-          <div className="empty-state"><div className="icon">⏳</div><p>Loading…</p></div>
+          <div className="empty-state"><div className="icon"><Buildings size={40} weight="thin" /></div><p>Loading…</p></div>
         ) : areaReports.length === 0 ? (
-          <div className="empty-state"><div className="icon">📊</div><p>No data yet.</p></div>
+          <div className="empty-state"><div className="icon"><ChartBar size={40} weight="thin" /></div><p>No data yet.</p></div>
         ) : (
           areaReports.map((r, i) => {
             const fwdRevenue = r.props.reduce((s, p) =>
@@ -221,10 +229,10 @@ function Reports() {
           <div className="breakdown-row" style={{ background: "var(--surface2)", fontWeight: 700, borderTop: "1px solid var(--border-soft)" }}>
             <span style={{ fontFamily: "var(--font-display)", color: "var(--text)" }}>TOTAL</span>
             <span>{totalProps}</span>
-            <span style={{ fontFamily: "var(--font-display)", color: "var(--gold)", fontWeight: 800 }}>
+            <span style={{ fontFamily: "var(--font-display)", color: "var(--accent)", fontWeight: 800 }}>
               {Number(totalMonthly).toLocaleString()}
             </span>
-            <span style={{ fontFamily: "var(--font-display)", color: "var(--gold)", fontWeight: 800 }}>
+            <span style={{ fontFamily: "var(--font-display)", color: "var(--accent)", fontWeight: 800 }}>
               {Number(periodRevenue).toLocaleString()}
             </span>
             <span style={{ color: "var(--green)", fontWeight: 700 }}>{Number(totalCollected).toLocaleString()}</span>
@@ -259,7 +267,7 @@ function Reports() {
 
               const statusEl =
                 status === "expired"  ? <span style={{ color:"var(--red)",    fontWeight:700, fontSize:11 }}>Expired</span>   :
-                status === "critical" ? <span style={{ color:"var(--red)",    fontWeight:700, fontSize:11 }}>⚠️ {days}d</span> :
+                status === "critical" ? <span style={{ color:"var(--red)", fontWeight:700, fontSize:11, display:"inline-flex", alignItems:"center", gap:3 }}><WarningCircle size={11} weight="fill" /> {days}d</span> :
                 status === "expiring" ? <span style={{ color:"var(--orange)", fontWeight:700, fontSize:11 }}>{days}d left</span> :
                                         <span style={{ color:"var(--green)",  fontWeight:700, fontSize:11 }}>Active</span>;
 
@@ -274,7 +282,7 @@ function Reports() {
                     <div style={{ color:"var(--text-muted)", fontSize:11 }}>{p.propertyName}</div>
                   </div>
                   <span style={{ fontSize:12, color:"var(--text-sub)" }}>{r.area}</span>
-                  <span style={{ fontFamily:"var(--font-display)", fontWeight:700, color:"var(--gold)" }}>
+                  <span style={{ fontFamily:"var(--font-display)", fontWeight:700, color:"var(--accent)" }}>
                     {Number(p.rent || 0).toLocaleString()}
                   </span>
                   <div style={{ fontSize:11, color:"var(--text-muted)", lineHeight:1.6 }}>

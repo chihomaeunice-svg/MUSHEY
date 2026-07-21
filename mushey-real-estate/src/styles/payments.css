@@ -17,11 +17,11 @@
   border: 1px solid var(--border-soft);
   background: var(--surface);
   color: var(--text-sub);
-  transition: all 0.15s;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s;
 }
 
-.filter-tab:hover { border-color: var(--gold-dim); color: var(--text); }
-.filter-tab.active { background: var(--gold-dim); border-color: var(--gold-dim); color: var(--gold); }
+.filter-tab:hover { border-color: var(--accent-dim); color: var(--text); }
+.filter-tab.active { background: var(--accent-dim); border-color: var(--accent-dim); color: var(--accent); }
 
 /* Payment cards */
 .payments-grid {
@@ -106,7 +106,7 @@
   font-size: 16px;
   font-weight: 800;
   font-family: var(--font-display);
-  color: var(--gold);
+  color: var(--accent);
 }
 
 /* Payment checklist items */
@@ -137,7 +137,7 @@
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  transition: all 0.15s;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s;
   flex-shrink: 0;
 }
 
@@ -187,4 +187,4 @@
 
 .summary-chip .chip-value.green  { color: var(--green); }
 .summary-chip .chip-value.red    { color: var(--red); }
-.summary-chip .chip-value.gold   { color: var(--gold); }
+.summary-chip .chip-value.gold   { color: var(--accent); }

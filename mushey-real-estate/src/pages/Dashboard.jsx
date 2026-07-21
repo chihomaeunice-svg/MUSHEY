@@ -1,13 +1,17 @@
 // pages/Dashboard.jsx
 import { useState, useEffect } from "react";
 import { collection, getDocs } from "firebase/firestore";
+import {
+  House, Users, Key, Wallet, CheckCircle, Buildings,
+  Plus, FileText, CreditCard, ChartBar,
+} from "@phosphor-icons/react";
 import { db } from "../firebase/firebaseConfig";
 import { useCompany } from "../components/CompanyProvider";
 import "../styles/dashboard.css";
 
 const AREA_COLORS = [
-  "#d4a843","#3498db","#2ecc71","#e74c3c","#9b59b6",
-  "#f39c12","#1abc9c","#e67e22","#e91e63","#00bcd4",
+  "#b5573a","#3a6ea5","#3f7d5c","#c1443a","#8e6ba8",
+  "#c98a34","#3f9a8f","#c9793a","#b5457a","#3a95a5",
 ];
 
 function Dashboard({ setCurrentPage }) {
@@ -84,7 +88,7 @@ function Dashboard({ setCurrentPage }) {
     return (
       <div className="dashboard">
         <div className="empty-state">
-          <div className="icon">⏳</div>
+          <div className="icon"><Buildings size={40} weight="thin" /></div>
           <p>Loading dashboard…</p>
         </div>
       </div>
@@ -101,20 +105,20 @@ function Dashboard({ setCurrentPage }) {
 
       {/* Stats */}
       <div className="stats-grid">
-        <div className="stat-card" style={{ "--card-accent": "#d4a843" }}>
-          <span className="stat-icon">🏠</span>
+        <div className="stat-card" style={{ "--card-accent": "#b5573a" }}>
+          <span className="stat-icon"><House size={20} weight="regular" /></span>
           <div className="stat-label">Total Properties</div>
           <div className="stat-value">{stats.totalProperties}</div>
           <div className="stat-sub">Across all areas</div>
         </div>
-        <div className="stat-card" style={{ "--card-accent": "#3498db" }}>
-          <span className="stat-icon">👥</span>
+        <div className="stat-card" style={{ "--card-accent": "#3a6ea5" }}>
+          <span className="stat-icon"><Users size={20} weight="regular" /></span>
           <div className="stat-label">Active Tenants</div>
           <div className="stat-value">{stats.totalTenants}</div>
           <div className="stat-sub">Currently occupied</div>
         </div>
-        <div className="stat-card" style={{ "--card-accent": "#e67e22" }}>
-          <span className="stat-icon">🔑</span>
+        <div className="stat-card" style={{ "--card-accent": "#c9793a" }}>
+          <span className="stat-icon"><Key size={20} weight="regular" /></span>
           <div className="stat-label">Vacant Units</div>
           <div className="stat-value">{stats.vacantCount}</div>
           <div className="stat-sub">
@@ -123,14 +127,14 @@ function Dashboard({ setCurrentPage }) {
               : 0}% vacancy rate
           </div>
         </div>
-        <div className="stat-card" style={{ "--card-accent": "#2ecc71" }}>
-          <span className="stat-icon">💰</span>
+        <div className="stat-card" style={{ "--card-accent": "#3f7d5c" }}>
+          <span className="stat-icon"><Wallet size={20} weight="regular" /></span>
           <div className="stat-label">Total Monthly Rent</div>
           <div className="stat-value">{Number(stats.totalRent).toLocaleString()}</div>
           <div className="stat-sub">TZS expected</div>
         </div>
-        <div className="stat-card" style={{ "--card-accent": "#9b59b6" }}>
-          <span className="stat-icon">✅</span>
+        <div className="stat-card" style={{ "--card-accent": "#8e6ba8" }}>
+          <span className="stat-icon"><CheckCircle size={20} weight="regular" /></span>
           <div className="stat-label">Rent Paid</div>
           <div className="stat-value">{stats.paidThisMonth}</div>
           <div className="stat-sub">
@@ -146,7 +150,7 @@ function Dashboard({ setCurrentPage }) {
         <h2>Areas Overview</h2>
         {areaData.length === 0 ? (
           <div className="empty-state">
-            <div className="icon">🏙️</div>
+            <div className="icon"><Buildings size={40} weight="thin" /></div>
             <p>No properties yet. Add properties to see area stats.</p>
           </div>
         ) : (
@@ -195,10 +199,10 @@ function Dashboard({ setCurrentPage }) {
           </div>
           <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
             {[
-              { label: "➕ Add New Property",   page: "properties" },
-              { label: "📄 Manage Contracts",   page: "contracts" },
-              { label: "💳 Record Payment",     page: "payments" },
-              { label: "📊 View Reports",       page: "reports" },
+              { label: "Add New Property", icon: Plus,       page: "properties" },
+              { label: "Manage Contracts", icon: FileText,   page: "contracts" },
+              { label: "Record Payment",   icon: CreditCard, page: "payments" },
+              { label: "View Reports",     icon: ChartBar,   page: "reports" },
             ].map((q) => (
               <button
                 key={q.page}
@@ -206,7 +210,7 @@ function Dashboard({ setCurrentPage }) {
                 style={{ justifyContent: "flex-start" }}
                 onClick={() => setCurrentPage(q.page)}
               >
-                {q.label}
+                <q.icon size={16} weight="regular" /> {q.label}
               </button>
             ))}
           </div>

@@ -4,7 +4,10 @@
 // is one enrollment the super-admin dashboard counts.
 
 import { useState } from "react";
+import { Buildings, WarningCircle } from "@phosphor-icons/react";
 import { registerCompany } from "../firebase/company";
+import HeroSkyline from "../components/HeroSkyline";
+import ThemeToggle from "../components/ThemeToggle";
 import "../styles/login.css";
 
 const emptyForm = {
@@ -57,8 +60,9 @@ export default function Signup({ onSwitchToLogin }) {
 
       {/* Left: Branding */}
       <div className="login-brand">
+        <HeroSkyline />
         <div className="brand-logo">
-          <div className="logo-box">🏢</div>
+          <div className="logo-box"><Buildings size={20} weight="fill" /></div>
           <div className="logo-text">
             <h1>Mushey Real Estate</h1>
             <span>Property Management</span>
@@ -77,6 +81,7 @@ export default function Signup({ onSwitchToLogin }) {
 
       {/* Right: Form */}
       <div className="login-form-panel">
+        <ThemeToggle className="login-theme-toggle" />
         <div className="login-box">
           <h2 className="login-title">Register your company</h2>
           <p className="login-sub">Set up your workspace in a minute</p>
@@ -170,7 +175,7 @@ export default function Signup({ onSwitchToLogin }) {
 
             {error && (
               <div className="login-error">
-                ⚠️ {error}
+                <WarningCircle size={15} weight="fill" /> {error}
               </div>
             )}
           </form>

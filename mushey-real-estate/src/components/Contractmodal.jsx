@@ -1,4 +1,5 @@
 // src/components/ContractModal.jsx
+import { WarningCircle, X, Phone, House, Broom, Drop } from "@phosphor-icons/react";
 import { daysUntilExpiry, contractMonths, contractTotalRevenue, fmtTZS } from "../utils/Revenuecalc";
 import "../styles/contractModal.css";
 
@@ -20,7 +21,7 @@ export default function ContractModal({ contract, onClose }) {
   const statusLabel =
     days === null ? "No date set"        :
     days < 0      ? "Expired"            :
-    days <= 14    ? `⚠️ Expires in ${days} days` :
+    days <= 14    ? <><WarningCircle size={13} weight="fill" style={{ verticalAlign: -2 }} /> Expires in {days} days</> :
     days <= 30    ? `Expires in ${days} days`    :
                     "Active";
 
@@ -42,13 +43,13 @@ export default function ContractModal({ contract, onClose }) {
             <h2>{contract.tenantName || "Unknown Tenant"}</h2>
             <p>{contract.propertyName} &nbsp;·&nbsp; {contract.area} &nbsp;·&nbsp; {contract.type || "Property"}</p>
           </div>
-          <button className="cm-close" onClick={onClose}>✕</button>
+          <button className="cm-close" onClick={onClose} aria-label="Close"><X size={16} /></button>
         </div>
 
         {/* Status bar */}
         <div className="cm-status-bar" style={{ borderColor: statusColor }}>
           <span style={{ color: statusColor, fontWeight: 700 }}>{statusLabel}</span>
-          {contract.phone && <span className="cm-phone">📞 {contract.phone}</span>}
+          {contract.phone && <span className="cm-phone"><Phone size={13} weight="fill" /> {contract.phone}</span>}
         </div>
 
         {/* Body */}
@@ -91,7 +92,7 @@ export default function ContractModal({ contract, onClose }) {
                     className="cm-progress-fill"
                     style={{
                       width: `${progress}%`,
-                      background: progress > 85 ? "var(--red)" : progress > 65 ? "var(--orange)" : "var(--gold)",
+                      background: progress > 85 ? "var(--red)" : progress > 65 ? "var(--orange)" : "var(--accent)",
                     }}
                   />
                 </div>
@@ -119,14 +120,14 @@ export default function ContractModal({ contract, onClose }) {
             <div className="cm-section-title">Payment Status</div>
             <div className="cm-payment-checks">
               {[
-                { label: "🏠 Rent",                   paid: contract.rentPaid },
-                { label: "🧹 Cleanliness",            paid: contract.cleaningPaid },
-                { label: "💧 Dirty Water Collection", paid: contract.waterPaid },
+                { label: "Rent",                   icon: House, paid: contract.rentPaid },
+                { label: "Cleanliness",            icon: Broom, paid: contract.cleaningPaid },
+                { label: "Dirty Water Collection", icon: Drop,  paid: contract.waterPaid },
               ].map(item => (
                 <div className="cm-check-row" key={item.label}>
-                  <span className="cm-check-label">{item.label}</span>
+                  <span className="cm-check-label"><item.icon size={14} weight="regular" /> {item.label}</span>
                   <span className={`badge ${item.paid ? "paid" : "unpaid"}`}>
-                    {item.paid ? "✓ Paid" : "✗ Unpaid"}
+                    {item.paid ? "Paid" : "Unpaid"}
                   </span>
                 </div>
               ))}

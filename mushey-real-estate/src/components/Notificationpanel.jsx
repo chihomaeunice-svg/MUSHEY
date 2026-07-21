@@ -1,4 +1,5 @@
 // src/components/NotificationPanel.jsx
+import { Bell, X, CheckCircle } from "@phosphor-icons/react";
 import { daysUntilExpiry } from "../utils/Revenuecalc";
 import "../styles/notificationPanel.css";
 
@@ -26,19 +27,19 @@ export default function NotificationPanel({ properties, onClose, onSelectContrac
 
         <div className="np-header">
           <div className="np-header-left">
-            <span className="np-icon">🔔</span>
+            <span className="np-icon"><Bell size={16} weight="fill" /></span>
             <h2>Notifications</h2>
             {notifications.length > 0 && (
               <span className="np-count">{notifications.length}</span>
             )}
           </div>
-          <button className="np-close" onClick={onClose}>✕</button>
+          <button className="np-close" onClick={onClose} aria-label="Close"><X size={15} /></button>
         </div>
 
         <div className="np-body">
           {notifications.length === 0 ? (
             <div className="np-empty">
-              <div className="np-empty-icon">✅</div>
+              <div className="np-empty-icon"><CheckCircle size={32} weight="thin" /></div>
               <p>No contracts expiring in the next 30 days</p>
             </div>
           ) : (
@@ -54,7 +55,7 @@ export default function NotificationPanel({ properties, onClose, onSelectContrac
                   <div className={`np-dot ${u.dot}`} />
                   <div className="np-item-body">
                     <div className="np-item-name">{p.tenantName || "Unknown"}</div>
-                    <div className="np-item-meta">{p.id} · {p.area}</div>
+                    <div className="np-item-meta">{p.propertyName} · {p.area}</div>
                     <div className="np-item-date">
                       Contract ends: <strong>{p.contractEnd}</strong>
                     </div>

@@ -4,6 +4,7 @@
 
 import { useState } from "react";
 import { doc, updateDoc } from "firebase/firestore";
+import { X } from "@phosphor-icons/react";
 import { db } from "../firebase/firebaseConfig";
 import { useCompany } from "../components/CompanyProvider";
 import "../styles/settings.css";
@@ -152,7 +153,7 @@ function Settings() {
             {areas.map((a) => (
               <span className="settings-area-chip" key={a}>
                 {a}
-                <button type="button" onClick={() => removeArea(a)} title="Remove">✕</button>
+                <button type="button" onClick={() => removeArea(a)} title="Remove" aria-label={`Remove ${a}`}><X size={11} /></button>
               </span>
             ))}
           </div>

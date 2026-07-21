@@ -5,6 +5,7 @@
 // and how many tenants each is managing — for billing and maintenance follow-ups.
 
 import { useEffect, useState } from "react";
+import { SignOut, Buildings, CheckCircle, Users } from "@phosphor-icons/react";
 import { logout } from "../firebase/company";
 import { listAllCompanies, countCompanyProperties } from "../firebase/company";
 import "../styles/superadmin.css";
@@ -53,24 +54,24 @@ function SuperAdmin() {
           <h1>Mushey — Super Admin</h1>
           <p>Every company enrolled on the platform</p>
         </div>
-        <button className="btn btn-ghost" onClick={() => logout()}>🚪 Sign Out</button>
+        <button className="btn btn-ghost" onClick={() => logout()}><SignOut size={15} /> Sign Out</button>
       </header>
 
       <div className="sa-stats">
-        <div className="stat-card" style={{ "--card-accent": "#d4a843" }}>
-          <span className="stat-icon">🏢</span>
+        <div className="stat-card" style={{ "--card-accent": "#b5573a" }}>
+          <span className="stat-icon"><Buildings size={20} weight="regular" /></span>
           <div className="stat-label">Companies Installed</div>
           <div className="stat-value">{totalCompanies}</div>
           <div className="stat-sub">Total enrollments</div>
         </div>
-        <div className="stat-card" style={{ "--card-accent": "#2ecc71" }}>
-          <span className="stat-icon">✅</span>
+        <div className="stat-card" style={{ "--card-accent": "#3f7d5c" }}>
+          <span className="stat-icon"><CheckCircle size={20} weight="regular" /></span>
           <div className="stat-label">Active</div>
           <div className="stat-value">{activeCount}</div>
           <div className="stat-sub">Currently active accounts</div>
         </div>
-        <div className="stat-card" style={{ "--card-accent": "#3498db" }}>
-          <span className="stat-icon">👥</span>
+        <div className="stat-card" style={{ "--card-accent": "#3a6ea5" }}>
+          <span className="stat-icon"><Users size={20} weight="regular" /></span>
           <div className="stat-label">Total Tenants Managed</div>
           <div className="stat-value">{totalTenants}</div>
           <div className="stat-sub">Across every company</div>
@@ -88,9 +89,9 @@ function SuperAdmin() {
       <div className="properties-table-wrap">
         <div className="table-scroll">
           {loading ? (
-            <div className="empty-state"><div className="icon">⏳</div><p>Loading companies…</p></div>
+            <div className="empty-state"><div className="icon"><Buildings size={40} weight="thin" /></div><p>Loading companies…</p></div>
           ) : filtered.length === 0 ? (
-            <div className="empty-state"><div className="icon">🏢</div><p>No companies enrolled yet.</p></div>
+            <div className="empty-state"><div className="icon"><Buildings size={40} weight="thin" /></div><p>No companies enrolled yet.</p></div>
           ) : (
             <table>
               <thead>

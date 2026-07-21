@@ -39,7 +39,7 @@
   font-weight: 600;
   cursor: pointer;
 }
-.photo-upload-btn:hover { background: var(--surface); border-color: var(--gold); }
+.photo-upload-btn:hover { background: var(--surface); border-color: var(--accent); }
 
 .photo-upload-error {
   color: var(--red);

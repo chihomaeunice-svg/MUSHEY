@@ -2,6 +2,7 @@
 // Shows a dismissable in-app alert for contracts expiring within 14 days.
 
 import { useState } from "react";
+import { X } from "@phosphor-icons/react";
 import { daysUntilExpiry } from "../utils/Revenuecalc";
 import "../styles/expiryBanner.css";
 
@@ -26,13 +27,15 @@ export default function ExpiryBanner({ properties, onReview }) {
             className={`expiry-alert ${days <= 3 ? "danger" : "warning"}`}
             key={key}
           >
-            <span className="expiry-alert-icon">
-              {days <= 3 ? "🔴" : "🟡"}
-            </span>
+            <span
+              className="expiry-alert-icon"
+              style={{ background: days <= 3 ? "var(--red)" : "var(--orange)" }}
+              aria-hidden="true"
+            />
             <div className="expiry-alert-body">
               <strong>{p.tenantName || "Unknown Tenant"}</strong>
               {" — "}
-              {p.id}, {p.area}
+              {p.propertyName}, {p.area}
               <span className="expiry-alert-date">
                 Contract expires <b>{p.contractEnd}</b>
                 {" "}({days === 0 ? "today!" : `in ${days} day${days !== 1 ? "s" : ""}`})
@@ -52,8 +55,9 @@ export default function ExpiryBanner({ properties, onReview }) {
                 className="expiry-alert-close"
                 onClick={() => setDismissed((d) => [...d, key])}
                 title="Dismiss"
+                aria-label="Dismiss"
               >
-                ✕
+                <X size={13} />
               </button>
             </div>
           </div>

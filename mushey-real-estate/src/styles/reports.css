@@ -23,11 +23,11 @@
   border: 1px solid var(--border-soft);
   background: var(--surface);
   color: var(--text-sub);
-  transition: all 0.15s;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s;
 }
 
-.period-btn:hover  { color: var(--text); border-color: var(--gold-dim); }
-.period-btn.active { background: var(--gold-dim); border-color: var(--gold-dim); color: var(--gold); }
+.period-btn:hover  { color: var(--text); border-color: var(--accent-dim); }
+.period-btn.active { background: var(--accent-dim); border-color: var(--accent-dim); color: var(--accent); }
 
 /* Profit overview */
 .profit-overview {
@@ -46,14 +46,14 @@
   overflow: hidden;
 }
 
-.profit-metric::after {
-  content: attr(data-icon);
+.profit-metric .metric-icon {
   position: absolute;
   right: 16px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 36px;
-  opacity: 0.07;
+  opacity: 0.09;
+  color: var(--text);
+  pointer-events: none;
 }
 
 .profit-metric .metric-label {
@@ -75,7 +75,7 @@
 }
 
 .profit-metric .metric-value.green  { color: var(--green); }
-.profit-metric .metric-value.gold   { color: var(--gold); }
+.profit-metric .metric-value.gold   { color: var(--accent); }
 .profit-metric .metric-value.red    { color: var(--red); }
 
 .profit-metric .metric-change {
@@ -155,7 +155,7 @@
 
 .collection-mini-fill {
   height: 100%;
-  background: var(--gold);
+  background: var(--accent);
   border-radius: 99px;
 }
 

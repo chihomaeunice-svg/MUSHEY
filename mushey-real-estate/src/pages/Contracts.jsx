@@ -1,6 +1,7 @@
 // pages/Contracts.jsx
 import { useState, useEffect } from "react";
 import { collection, getDocs } from "firebase/firestore";
+import { WarningCircle, FileText, Buildings } from "@phosphor-icons/react";
 import { db } from "../firebase/firebaseConfig";
 import { useCompany } from "../components/CompanyProvider";
 import ContractModal from "../components/Contractmodal";
@@ -47,7 +48,7 @@ function Contracts() {
     const d = daysLeft(end);
     if (!end)   return <span className="badge">No Date</span>;
     if (d < 0)  return <span className="badge expired">Expired</span>;
-    if (d < 14) return <span className="badge expiring">⚠️ {d}d left</span>;
+    if (d < 14) return <span className="badge expiring"><WarningCircle size={11} weight="fill" /> {d}d left</span>;
     if (d < 30) return <span className="badge expiring">Expiring ({d}d)</span>;
     return <span className="badge active">Active</span>;
   };
@@ -89,12 +90,12 @@ function Contracts() {
 
       {expiringSoon > 0 && (
         <div style={{
-          background: "var(--orange-dim)", border: "1px solid #f39c1230",
+          background: "var(--orange-dim)", border: "1px solid #c98a3430",
           borderRadius: "var(--radius)", padding: "12px 16px", marginBottom: "20px",
           color: "var(--orange)", fontSize: "13px", display: "flex",
           alignItems: "center", gap: "10px",
         }}>
-          ⚠️ <strong>{expiringSoon} contract{expiringSoon > 1 ? "s" : ""}</strong> expiring within 30 days. Please review and renew.
+          <WarningCircle size={16} weight="fill" /> <strong>{expiringSoon} contract{expiringSoon > 1 ? "s" : ""}</strong> expiring within 30 days. Please review and renew.
         </div>
       )}
 
@@ -109,8 +110,8 @@ function Contracts() {
                 padding: "7px 16px", borderRadius: "99px", fontSize: "12px",
                 fontWeight: 600, cursor: "pointer",
                 border: "1px solid var(--border-soft)",
-                background: filterStatus === s ? "var(--gold-dim)" : "var(--surface)",
-                color: filterStatus === s ? "var(--gold)" : "var(--text-sub)",
+                background: filterStatus === s ? "var(--accent-dim)" : "var(--surface)",
+                color: filterStatus === s ? "var(--accent)" : "var(--text-sub)",
                 transition: "all 0.15s",
               }}
             >
@@ -124,7 +125,7 @@ function Contracts() {
           style={{
             background: "var(--surface)", border: "1px solid var(--border-soft)",
             color: "var(--text)", padding: "9px 14px",
-            borderRadius: "var(--radius)", outline: "none",
+            borderRadius: "var(--radius)",
           }}
         >
           <option value="all">All Areas</option>
@@ -133,9 +134,9 @@ function Contracts() {
       </div>
 
       {loading ? (
-        <div className="empty-state"><div className="icon">⏳</div><p>Loading contracts…</p></div>
+        <div className="empty-state"><div className="icon"><Buildings size={40} weight="thin" /></div><p>Loading contracts…</p></div>
       ) : Object.keys(grouped).length === 0 ? (
-        <div className="empty-state"><div className="icon">📄</div><p>No contracts found.</p></div>
+        <div className="empty-state"><div className="icon"><FileText size={40} weight="thin" /></div><p>No contracts found.</p></div>
       ) : (
         Object.entries(grouped).map(([area, items]) => (
           <div className="area-group" key={area}>
@@ -193,7 +194,7 @@ function Contracts() {
                   {/* Expiry warning */}
                   {days >= 0 && days < 14 && (
                     <div className="expiry-bar">
-                      <span className="icon">⚠️</span>
+                      <span className="icon"><WarningCircle size={14} weight="fill" /></span>
                       Contract expires in {days} days — emails being sent automatically
                     </div>
                   )}

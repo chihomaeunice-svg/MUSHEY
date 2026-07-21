@@ -1,6 +1,9 @@
 // src/pages/Login.jsx
 import { useState } from "react";
+import { Buildings, WarningCircle } from "@phosphor-icons/react";
 import { login } from "../firebase/auth";
+import HeroSkyline from "../components/HeroSkyline";
+import ThemeToggle from "../components/ThemeToggle";
 import "../styles/login.css";
 
 export default function Login({ onSwitchToSignup }) {
@@ -27,8 +30,9 @@ export default function Login({ onSwitchToSignup }) {
 
       {/* Left: Branding */}
       <div className="login-brand">
+        <HeroSkyline />
         <div className="brand-logo">
-          <div className="logo-box">🏢</div>
+          <div className="logo-box"><Buildings size={20} weight="fill" /></div>
           <div className="logo-text">
             <h1>Mushey Real Estate</h1>
             <span>Property Management</span>
@@ -61,6 +65,7 @@ export default function Login({ onSwitchToSignup }) {
 
       {/* Right: Form */}
       <div className="login-form-panel">
+        <ThemeToggle className="login-theme-toggle" />
         <div className="login-box">
           <h2 className="login-title">Welcome back</h2>
           <p className="login-sub">Sign in to your admin account</p>
@@ -99,7 +104,7 @@ export default function Login({ onSwitchToSignup }) {
 
             {error && (
               <div className="login-error">
-                ⚠️ {error}
+                <WarningCircle size={15} weight="fill" /> {error}
               </div>
             )}
           </form>

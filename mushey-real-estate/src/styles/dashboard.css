@@ -25,7 +25,7 @@
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 2px;
-  background: var(--card-accent, var(--gold));
+  background: var(--card-accent, var(--accent));
   opacity: 0.6;
 }
 
@@ -77,12 +77,12 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 20px;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
   cursor: default;
 }
 
 .area-card:hover {
-  border-color: var(--gold-dim);
+  border-color: var(--accent-dim);
   transform: translateY(-2px);
   box-shadow: var(--shadow);
 }
@@ -105,8 +105,8 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--gold);
-  background: var(--gold-dim);
+  color: var(--accent);
+  background: var(--accent-dim);
   padding: 3px 8px;
   border-radius: 99px;
 }
@@ -176,7 +176,7 @@
 
 .section-card-header a {
   font-size: 12px;
-  color: var(--gold);
+  color: var(--accent);
 }
 
 .activity-list {

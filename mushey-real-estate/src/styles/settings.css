@@ -31,7 +31,7 @@
   margin-top: 3px;
   width: 16px;
   height: 16px;
-  accent-color: var(--gold);
+  accent-color: var(--accent);
 }
 .settings-toggle-label {
   font-size: 13px;
@@ -60,7 +60,6 @@
   color: var(--text);
   padding: 10px 14px;
   border-radius: var(--radius);
-  outline: none;
 }
 
 .settings-area-chips {

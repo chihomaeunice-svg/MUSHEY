@@ -3,6 +3,9 @@ import { useState, useEffect } from "react";
 import {
   doc, addDoc, updateDoc, collection, getDocs, deleteDoc,
 } from "firebase/firestore";
+import {
+  MagnifyingGlass, Plus, House, MapTrifold, PencilSimple, Trash, X, Buildings,
+} from "@phosphor-icons/react";
 import { db } from "../firebase/firebaseConfig";
 import { useCompany } from "../components/CompanyProvider";
 import PhotoUpload from "../components/PhotoUpload";
@@ -164,7 +167,7 @@ function Properties({ setCurrentPage }) {
           <p>All houses and shops across every area</p>
         </div>
         <div className="empty-state">
-          <div className="icon">🗺️</div>
+          <div className="icon"><MapTrifold size={40} weight="thin" /></div>
           <p>You haven't added any areas yet — properties are organized by area.</p>
           <button className="btn btn-primary" style={{ marginTop: 14 }} onClick={() => setCurrentPage?.("settings")}>
             Add Your Areas in Settings
@@ -185,7 +188,7 @@ function Properties({ setCurrentPage }) {
       <div className="properties-toolbar">
         <div className="toolbar-left">
           <div className="search-input-wrap">
-            <span className="search-icon">🔍</span>
+            <span className="search-icon"><MagnifyingGlass size={15} /></span>
             <input
               placeholder="Search property or tenant…"
               value={search}
@@ -213,7 +216,7 @@ function Properties({ setCurrentPage }) {
           </select>
         </div>
         <button className="btn btn-primary" onClick={openAdd}>
-          ＋ Add Property
+          <Plus size={15} weight="bold" /> Add Property
         </button>
       </div>
 
@@ -227,12 +230,12 @@ function Properties({ setCurrentPage }) {
         <div className="table-scroll">
           {loading ? (
             <div className="empty-state">
-              <div className="icon">⏳</div>
+              <div className="icon"><Buildings size={40} weight="thin" /></div>
               <p>Loading properties…</p>
             </div>
           ) : filtered.length === 0 ? (
             <div className="empty-state">
-              <div className="icon">🏠</div>
+              <div className="icon"><House size={40} weight="thin" /></div>
               <p>No properties found. Click "Add Property" to get started.</p>
             </div>
           ) : (
@@ -287,8 +290,8 @@ function Properties({ setCurrentPage }) {
                     <td>{p.status === "vacant" ? <span className="badge expiring">Vacant</span> : contractStatus(p.contractEnd)}</td>
                     <td>
                       <div className="row-actions">
-                        <button className="action-btn" onClick={() => openEdit(p)} title="Edit">✏️</button>
-                        <button className="action-btn delete" onClick={() => handleDelete(p)} title="Delete">🗑️</button>
+                        <button className="action-btn" onClick={() => openEdit(p)} title="Edit" aria-label={`Edit ${p.propertyName}`}><PencilSimple size={15} /></button>
+                        <button className="action-btn delete" onClick={() => handleDelete(p)} title="Delete" aria-label={`Delete ${p.propertyName}`}><Trash size={15} /></button>
                       </div>
                     </td>
                   </tr>
@@ -305,7 +308,9 @@ function Properties({ setCurrentPage }) {
           <div className="modal">
             <div className="modal-header">
               <h2>{editMode ? "Edit Property" : "Add New Property"}</h2>
-              <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
+              <button className="modal-close" onClick={() => setShowModal(false)} aria-label="Close">
+                <X size={16} />
+              </button>
             </div>
             <div className="modal-body">
               <div className="form-row">

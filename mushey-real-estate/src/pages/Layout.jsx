@@ -1,6 +1,10 @@
 // src/pages/Layout.jsx
 import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
+import {
+  SquaresFour, House, FileText, CreditCard, ChartBar, Wallet, Gear,
+  Buildings, SignOut, List, Bell,
+} from "@phosphor-icons/react";
 import { db } from "../firebase/firebaseConfig";
 import { logout } from "../firebase/auth";
 import { checkAndNotify } from "../utils/Notifications";
@@ -8,16 +12,17 @@ import { useCompany } from "../components/CompanyProvider";
 import ExpiryBanner from "../components/ExpiryBanner";
 import SubscriptionBanner from "../components/SubscriptionBanner";
 import NotificationPanel from "../components/Notificationpanel";
+import ThemeToggle from "../components/ThemeToggle";
 import "../styles/layout.css";
 
 const navItems = [
-  { icon: "⊞", label: "Dashboard",  page: "dashboard" },
-  { icon: "🏠", label: "Properties", page: "properties" },
-  { icon: "📄", label: "Contracts",  page: "contracts" },
-  { icon: "💳", label: "Payments",   page: "payments" },
-  { icon: "📊", label: "Reports",    page: "reports" },
-  { icon: "💰", label: "Billing",    page: "billing" },
-  { icon: "⚙️", label: "Settings",   page: "settings" },
+  { icon: SquaresFour, label: "Dashboard",  page: "dashboard" },
+  { icon: House,       label: "Properties", page: "properties" },
+  { icon: FileText,    label: "Contracts",  page: "contracts" },
+  { icon: CreditCard,  label: "Payments",   page: "payments" },
+  { icon: ChartBar,    label: "Reports",    page: "reports" },
+  { icon: Wallet,      label: "Billing",    page: "billing" },
+  { icon: Gear,        label: "Settings",   page: "settings" },
 ];
 
 // Pages still reachable once a company's subscription is locked — enough to
@@ -93,7 +98,7 @@ function Layout({ currentPage, setCurrentPage, children }) {
       {/* ── SIDEBAR ── */}
       <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
         <div className="sidebar-logo">
-          <div className="logo-icon">🏢</div>
+          <div className="logo-icon"><Buildings size={20} weight="fill" /></div>
           <h2>{company?.name || "Mushey Real Estate"}</h2>
           <span>Property Management</span>
         </div>
@@ -102,6 +107,7 @@ function Layout({ currentPage, setCurrentPage, children }) {
           <div className="nav-section-label">Main Menu</div>
           {navItems.map((item) => {
             const disabled = locked && !ALLOWED_WHEN_LOCKED.includes(item.page);
+            const Icon = item.icon;
             return (
             <button
               key={item.page}
@@ -111,7 +117,7 @@ function Layout({ currentPage, setCurrentPage, children }) {
               style={disabled ? { opacity: 0.4, cursor: "not-allowed" } : undefined}
               title={disabled ? "Locked — pay your subscription to unlock" : undefined}
             >
-              <span className="nav-icon">{item.icon}</span>
+              <span className="nav-icon"><Icon size={17} weight="regular" /></span>
               {item.label}
               {item.page === "contracts" && expiringCount > 0 && (
                 <span className="nav-badge">{expiringCount}</span>
@@ -123,7 +129,7 @@ function Layout({ currentPage, setCurrentPage, children }) {
 
         <div className="sidebar-footer">
           <button className="logout-btn" onClick={handleLogout}>
-            <span>🚪</span> Sign Out
+            <SignOut size={16} weight="regular" /> Sign Out
           </button>
           <p>Mushey Real Estate © 2025</p>
         </div>
@@ -138,13 +144,15 @@ function Layout({ currentPage, setCurrentPage, children }) {
               onClick={() => setSidebarOpen((v) => !v)}
               aria-label="Toggle menu"
             >
-              ☰
+              <List size={18} weight="regular" />
             </button>
             <span className="breadcrumb">
               Admin / <span>{pageLabels[currentPage]}</span>
             </span>
           </div>
           <div className="topbar-right" style={{ position: "relative" }}>
+
+            <ThemeToggle />
 
             {/* Bell button — opens notification panel */}
             {expiringCount > 0 && (
@@ -153,7 +161,7 @@ function Layout({ currentPage, setCurrentPage, children }) {
                 onClick={() => setShowNotifPanel((v) => !v)}
                 title="View expiring contracts"
               >
-                🔔 <span>{expiringCount} expiring</span>
+                <Bell size={14} weight="fill" /> <span>{expiringCount} expiring</span>
               </button>
             )}
 
