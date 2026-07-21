@@ -17,7 +17,7 @@ const emptyForm = {
   idType: "", idNumber: "", idPhotoUrl: "",
 };
 
-function Properties() {
+function Properties({ setCurrentPage }) {
   const { membership, company } = useCompany();
   const areas = company?.areas || [];
 
@@ -155,6 +155,24 @@ function Properties() {
     if (d < 30)  return <span className="badge expiring">Expires in {d}d</span>;
     return <span className="badge active">Active</span>;
   };
+
+  if (!loading && areas.length === 0) {
+    return (
+      <div className="properties">
+        <div className="page-header">
+          <h1>Properties</h1>
+          <p>All houses and shops across every area</p>
+        </div>
+        <div className="empty-state">
+          <div className="icon">🗺️</div>
+          <p>You haven't added any areas yet — properties are organized by area.</p>
+          <button className="btn btn-primary" style={{ marginTop: 14 }} onClick={() => setCurrentPage?.("settings")}>
+            Add Your Areas in Settings
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="properties">

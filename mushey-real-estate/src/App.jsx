@@ -36,7 +36,7 @@ function Screens() {
   const renderPage = () => {
     switch (currentPage) {
       case "dashboard":  return <Dashboard setCurrentPage={setCurrentPage} />;
-      case "properties": return <Properties />;
+      case "properties": return <Properties setCurrentPage={setCurrentPage} />;
       case "contracts":  return <Contracts />;
       case "payments":   return <Payments />;
       case "reports":    return <Reports />;
