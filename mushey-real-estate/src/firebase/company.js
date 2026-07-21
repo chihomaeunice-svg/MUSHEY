@@ -16,12 +16,13 @@ import { db } from "./firebaseConfig";
 
 /**
  * Register a brand-new company (an "enrollment"/install) and its owner account.
- * Creates: auth user, users/{uid}, companies/{companyId}. `areas` is whatever
- * the landlord entered during signup — every company defines its own list,
- * there's no shared default (a landlord in Arusha has nothing to do with
- * "Kimara" or "Kariakoo", which were specific to the original business).
+ * Creates: auth user, users/{uid}, companies/{companyId}. Starts with no
+ * areas — every company adds its own from inside the app (Settings, or the
+ * guided prompt on Properties) once signed in, there's no shared default (a
+ * landlord in Arusha has nothing to do with "Kimara" or "Kariakoo", which
+ * were specific to the original business).
  */
-export async function registerCompany({ companyName, tin, phone, ownerName, email, password, areas }) {
+export async function registerCompany({ companyName, tin, phone, ownerName, email, password }) {
   const cred = await createUserWithEmailAndPassword(auth, email, password);
   const uid = cred.user.uid;
   const companyId = uid; // one owner per company at signup time; simplest stable id
@@ -39,7 +40,7 @@ export async function registerCompany({ companyName, tin, phone, ownerName, emai
     createdAt: serverTimestamp(),
     active: true,
     plan: "trial",
-    areas: areas || [],
+    areas: [],
     requireReceiptUpload: false,
     receiptPrefix: (companyName || "MSH").slice(0, 3).toUpperCase(),
     nextReceiptNumber: 1,

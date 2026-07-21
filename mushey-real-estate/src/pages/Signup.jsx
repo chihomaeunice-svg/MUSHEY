@@ -6,7 +6,6 @@
 import { useState } from "react";
 import { registerCompany } from "../firebase/company";
 import "../styles/login.css";
-import "../styles/settings.css";
 
 const emptyForm = {
   companyName: "", tin: "", phone: "",
@@ -15,21 +14,10 @@ const emptyForm = {
 
 export default function Signup({ onSwitchToLogin }) {
   const [form, setForm]       = useState(emptyForm);
-  const [areas, setAreas]     = useState([]);
-  const [newArea, setNewArea] = useState("");
   const [error, setError]     = useState("");
   const [loading, setLoading] = useState(false);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
-
-  const addArea = () => {
-    const name = newArea.trim();
-    if (!name || areas.includes(name)) return;
-    setAreas((a) => [...a, name]);
-    setNewArea("");
-  };
-
-  const removeArea = (name) => setAreas((a) => a.filter((x) => x !== name));
 
   const handleSubmit = async (evt) => {
     evt.preventDefault();
@@ -53,8 +41,9 @@ export default function Signup({ onSwitchToLogin }) {
         ownerName: form.ownerName,
         email: form.email,
         password: form.password,
-        areas,
       });
+      // Areas are added afterward, inside the app (Settings, or the
+      // guided prompt on Properties) — not part of signup.
       // onAuthStateChanged in AuthProvider picks up the new session automatically.
     } catch (err) {
       setError(err.message);
@@ -122,32 +111,6 @@ export default function Signup({ onSwitchToLogin }) {
                 onChange={(e) => set("phone", e.target.value)}
                 placeholder="0712 345 678"
               />
-            </div>
-
-            <div className="login-field">
-              <label>Areas / Neighborhoods Where You Have Properties</label>
-              <div className="settings-area-add">
-                <input
-                  value={newArea}
-                  onChange={(e) => setNewArea(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addArea())}
-                  placeholder="e.g. Mikocheni, Sinza…"
-                />
-                <button type="button" className="btn btn-ghost" onClick={addArea}>Add</button>
-              </div>
-              {areas.length > 0 && (
-                <div className="settings-area-chips" style={{ marginTop: 8 }}>
-                  {areas.map((a) => (
-                    <span className="settings-area-chip" key={a}>
-                      {a}
-                      <button type="button" onClick={() => removeArea(a)} title="Remove">✕</button>
-                    </span>
-                  ))}
-                </div>
-              )}
-              <p className="settings-card-sub" style={{ marginTop: 6, marginBottom: 0 }}>
-                Optional — you can add or change these anytime in Settings.
-              </p>
             </div>
 
             <div className="login-field">
