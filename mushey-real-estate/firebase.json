@@ -17,6 +17,7 @@
     "rules": "firestore.rules"
   },
   "storage": {
+    "bucket": "mushey-real-estate.firebasestorage.app",
     "rules": "storage.rules"
   },
   "functions": {
