@@ -22,9 +22,9 @@
   position: absolute;
   inset: -6%;
   background:
-    radial-gradient(ellipse 70% 50% at 30% 15%, #f6c98a55, transparent 60%),
-    linear-gradient(180deg, #e8955c 0%, #c96a4c 32%, #7c4438 62%, #3a251f 100%);
-  animation: hero-kenburns 26s ease-in-out infinite alternate;
+    radial-gradient(ellipse 55% 35% at 50% 76%, #ffbd7a40, transparent 65%),
+    linear-gradient(180deg, #0a1330 0%, #16294f 36%, #2b3f66 60%, #4a3f4c 82%, #1c1712 100%);
+  animation: hero-kenburns 30s ease-in-out infinite alternate;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -47,7 +47,22 @@
 .login-brand .hero-scrim {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, #1c1712b0 0%, #1c171240 45%, #1c171270 100%);
+  background: linear-gradient(180deg, #0d0f18b5 0%, #0d0f1845 45%, #0d0f1875 100%);
+}
+
+/* A couple of windows breathe gently, like an occupied home at night */
+.hero-skyline .hero-window.flicker {
+  opacity: 0.55;
+  animation: hero-window-flicker 5s ease-in-out infinite;
+}
+
+@keyframes hero-window-flicker {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 0.95; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-skyline .hero-window.flicker { animation: none; opacity: 0.8; }
 }
 
 .brand-logo,
