@@ -120,6 +120,7 @@
 
 /* ── MAIN ── */
 .main-content {
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -127,6 +128,8 @@
 }
 
 .topbar {
+  position: relative;
+  z-index: 1;
   height: 60px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -180,6 +183,8 @@
 }
 
 .page-body {
+  position: relative;
+  z-index: 1;
   flex: 1;
   overflow-y: auto;
   padding: 28px;

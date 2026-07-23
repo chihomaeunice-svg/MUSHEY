@@ -13,7 +13,9 @@ import ExpiryBanner from "../components/ExpiryBanner";
 import SubscriptionBanner from "../components/SubscriptionBanner";
 import NotificationPanel from "../components/Notificationpanel";
 import ThemeToggle from "../components/ThemeToggle";
+import PageBackdrop from "../components/PageBackdrop";
 import "../styles/layout.css";
+import "../styles/pageBackdrop.css";
 
 const navItems = [
   { icon: SquaresFour, label: "Dashboard",  page: "dashboard" },
@@ -137,6 +139,7 @@ function Layout({ currentPage, setCurrentPage, children }) {
 
       {/* ── MAIN ── */}
       <div className="main-content">
+        <PageBackdrop />
         <header className="topbar">
           <div className="topbar-left">
             <button
