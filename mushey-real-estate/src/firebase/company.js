@@ -46,11 +46,12 @@ export async function registerCompany({ companyName, tin, phone, ownerName, emai
     nextReceiptNumber: 1,
     // Subscription billing (companies/{companyId}) — these fields are only
     // ever changed server-side (Cloud Functions) after this initial write;
-    // firestore.rules blocks clients from touching them afterward.
+    // firestore.rules blocks clients from touching them afterward. No
+    // payment gateway is wired up yet: payment is arranged directly with
+    // Mushey and currentPeriodEnd is extended on the account manually.
     subscriptionStatus: "trialing",
     subscriptionAmount: 35000,
     currentPeriodEnd: trialEnd.toISOString().slice(0, 10),
-    paymentProvider: "clickpesa",
   };
 
   await setDoc(doc(db, "companies", companyId), companyDoc);

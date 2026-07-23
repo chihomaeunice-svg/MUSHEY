@@ -1,12 +1,12 @@
 // pages/Billing.jsx
-// Subscription status + payment history for this company (35,000 TZS/month),
-// and the "Pay Now" action that triggers a ClickPesa mobile-money push.
+// Subscription status + payment history for this company (35,000 TZS/month).
+// No payment gateway is wired up yet — payment is arranged directly with
+// Mushey and the subscription period is extended on the account manually.
 
 import { useEffect, useState } from "react";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
 import { useCompany } from "../components/CompanyProvider";
-import { startSubscriptionCheckout } from "../firebase/billing";
 import "../styles/billing.css";
 
 const STATUS_LABELS = {
@@ -23,9 +23,6 @@ function daysUntil(dateStr) {
 
 function Billing() {
   const { membership, company } = useCompany();
-  const [phone, setPhone] = useState(company?.phone || "");
-  const [starting, setStarting] = useState(false);
-  const [message, setMessage] = useState("");
   const [history, setHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
 
@@ -58,24 +55,6 @@ function Billing() {
   const status = STATUS_LABELS[company.subscriptionStatus] || STATUS_LABELS.trialing;
   const days = daysUntil(company.currentPeriodEnd);
 
-  const handlePay = async () => {
-    if (!phone.trim()) {
-      setMessage("Enter the phone number to receive the mobile money payment prompt.");
-      return;
-    }
-    setStarting(true);
-    setMessage("");
-    try {
-      await startSubscriptionCheckout(phone.trim());
-      setMessage("Payment request sent — check your phone to approve it.");
-      loadHistory();
-    } catch (e) {
-      setMessage("Could not start payment: " + e.message);
-    } finally {
-      setStarting(false);
-    }
-  };
-
   return (
     <div className="billing">
       <div className="page-header">
@@ -102,20 +81,10 @@ function Billing() {
                 : "No billing period set yet."}
           </div>
 
-          <div className="form-group" style={{ marginTop: 16 }}>
-            <label>Phone Number for Mobile Money Payment</label>
-            <input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="0712 345 678"
-            />
-          </div>
-
-          <button className="btn btn-primary" onClick={handlePay} disabled={starting} style={{ marginTop: 12 }}>
-            {starting ? "Starting payment…" : `Pay ${Number(company.subscriptionAmount || 35000).toLocaleString()} TZS Now`}
-          </button>
-
-          {message && <p className="billing-message">{message}</p>}
+          <p className="billing-message">
+            To pay, renew, or upgrade your subscription, contact Mushey directly —
+            your account will be updated once payment is confirmed.
+          </p>
         </div>
 
         <div className="card">

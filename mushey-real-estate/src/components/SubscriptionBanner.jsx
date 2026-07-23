@@ -27,8 +27,8 @@ export default function SubscriptionBanner({ company, onGoToBilling }) {
     >
       <span>
         {locked
-          ? <><strong>Subscription locked.</strong> Payment is overdue past the grace period — pay now to restore full access.</>
-          : <><strong>Payment overdue.</strong> Renews at {Number(company.subscriptionAmount || 35000).toLocaleString()} TZS/month — pay soon to avoid losing access.</>}
+          ? <><strong>Subscription locked.</strong> Payment is overdue past the grace period — contact Mushey to restore full access.</>
+          : <><strong>Payment overdue.</strong> Renews at {Number(company.subscriptionAmount || 35000).toLocaleString()} TZS/month — contact Mushey soon to avoid losing access.</>}
       </span>
       <button
         onClick={onGoToBilling}

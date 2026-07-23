@@ -10,7 +10,6 @@
 
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onDocumentUpdated } = require("firebase-functions/v2/firestore");
-const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 const { sendEmail } = require("./email");
 const { sendSms } = require("./sms");
@@ -148,31 +147,6 @@ exports.onRentPaid = onDocumentUpdated(
     }
   }
 );
-
-/** Called from the app's Billing page to start a subscription payment. */
-exports.startSubscriptionCheckout = onCall(async (request) => {
-  if (!request.auth) throw new HttpsError("unauthenticated", "Sign in required.");
-
-  const userSnap = await db.doc(`users/${request.auth.uid}`).get();
-  const membership = userSnap.data();
-  if (!membership?.companyId) throw new HttpsError("failed-precondition", "No company membership found.");
-
-  const phoneNumber = request.data?.phoneNumber;
-  if (!phoneNumber) throw new HttpsError("invalid-argument", "phoneNumber is required.");
-
-  return subscriptions.startCheckout(db, { companyId: membership.companyId, phoneNumber });
-});
-
-/** ClickPesa (or whichever provider is active) posts payment results here. */
-exports.clickpesaWebhook = onRequest(async (req, res) => {
-  try {
-    await subscriptions.handleWebhook(db, "clickpesa", req.body, req.headers);
-    res.status(200).send("ok");
-  } catch (err) {
-    console.error("clickpesaWebhook error:", err);
-    res.status(400).send("error");
-  }
-});
 
 /** Runs once a day: moves lapsed companies trialing/active -> past_due -> locked. */
 exports.dailySubscriptionCheck = onSchedule(
