@@ -8,6 +8,7 @@ import {
 import { db } from "../firebase/firebaseConfig";
 import { useCompany } from "../components/CompanyProvider";
 import RecordPaymentModal from "../components/RecordPaymentModal";
+import { useCountUp } from "../utils/useCountUp";
 import "../styles/payments.css";
 
 const FIELD_TYPE = { rentPaid: "rent", cleaningPaid: "cleaning", waterPaid: "water" };
@@ -21,8 +22,15 @@ function Payments() {
   const [filterArea, setFilterArea] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [paymentModal, setPaymentModal] = useState(null); // { property, field, type }
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => { loadProperties(); }, [membership?.companyId]);
+
+  useEffect(() => {
+    if (loading) return;
+    const t = setTimeout(() => setMounted(true), 40);
+    return () => clearTimeout(t);
+  }, [loading]);
 
   const loadProperties = async () => {
     if (!membership?.companyId) return;
@@ -78,8 +86,12 @@ function Payments() {
   const fullyPaid  = filtered.filter((p) => payStatus(p) === "paid").length;
   const unpaidCount = filtered.filter((p) => payStatus(p) === "unpaid").length;
 
+  const animatedTotal  = useCountUp(totalRent);
+  const animatedPaid   = useCountUp(paidRent);
+  const animatedUnpaid = useCountUp(unpaidRent);
+
   return (
-    <div className="payments">
+    <div className={`payments ${mounted ? "mounted" : ""}`}>
       <div className="page-header">
         <h1>Payments</h1>
         <p>Track rent, cleaning, and water collection per tenant</p>
@@ -87,23 +99,23 @@ function Payments() {
 
       {/* Summary chips */}
       <div className="payments-summary">
-        <div className="summary-chip">
+        <div className="summary-chip stagger-in" style={{ "--stagger-i": 0 }}>
           <span className="chip-label">Total Expected</span>
-          <span className="chip-value gold">{Number(totalRent).toLocaleString()} TZS</span>
+          <span className="chip-value gold">{Number(animatedTotal).toLocaleString()} TZS</span>
         </div>
-        <div className="summary-chip">
+        <div className="summary-chip stagger-in" style={{ "--stagger-i": 1 }}>
           <span className="chip-label">Collected (Rent)</span>
-          <span className="chip-value green">{Number(paidRent).toLocaleString()} TZS</span>
+          <span className="chip-value green">{Number(animatedPaid).toLocaleString()} TZS</span>
         </div>
-        <div className="summary-chip">
+        <div className="summary-chip stagger-in" style={{ "--stagger-i": 2 }}>
           <span className="chip-label">Pending (Rent)</span>
-          <span className="chip-value red">{Number(unpaidRent).toLocaleString()} TZS</span>
+          <span className="chip-value red">{Number(animatedUnpaid).toLocaleString()} TZS</span>
         </div>
-        <div className="summary-chip">
+        <div className="summary-chip stagger-in" style={{ "--stagger-i": 3 }}>
           <span className="chip-label">Fully Cleared</span>
           <span className="chip-value green">{fullyPaid}</span>
         </div>
-        <div className="summary-chip">
+        <div className="summary-chip stagger-in" style={{ "--stagger-i": 4 }}>
           <span className="chip-label">Unpaid</span>
           <span className="chip-value red">{unpaidCount}</span>
         </div>
@@ -156,10 +168,10 @@ function Payments() {
         </div>
       ) : (
         <div className="payments-grid">
-          {filtered.map((p) => {
+          {filtered.map((p, i) => {
             const status = payStatus(p);
             return (
-              <div className="payment-card" key={p.id}>
+              <div className="payment-card stagger-in" key={p.id} style={{ "--stagger-i": i }}>
                 <div className="payment-card-header">
                   <div className="tenant-info">
                     <div className="tenant-name">{p.tenantName || "Unknown"}</div>

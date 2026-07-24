@@ -16,8 +16,15 @@ function Contracts() {
   const [filterArea,    setFilterArea]    = useState("all");
   const [filterStatus,  setFilterStatus]  = useState("all");
   const [selected,      setSelected]      = useState(null);
+  const [mounted,       setMounted]       = useState(false);
 
   useEffect(() => { loadContracts(); }, [membership?.companyId]);
+
+  useEffect(() => {
+    if (loading) return;
+    const t = setTimeout(() => setMounted(true), 40);
+    return () => clearTimeout(t);
+  }, [loading]);
 
   const loadContracts = async () => {
     if (!membership?.companyId) return;
@@ -81,8 +88,10 @@ function Contracts() {
     (c) => contractStatus(c.contractEnd) === "expiring"
   ).length;
 
+  let cardIndex = 0;
+
   return (
-    <div className="contracts">
+    <div className={`contracts ${mounted ? "mounted" : ""}`}>
       <div className="page-header">
         <h1>Contracts</h1>
         <p>Click any contract to view full details</p>
@@ -150,13 +159,14 @@ function Contracts() {
               const pct  = progressPct(c.contractStart, c.contractEnd);
               const days = daysLeft(c.contractEnd);
               const progressClass = days < 0 ? "danger" : days < 30 ? "warning" : "";
+              const i = cardIndex++;
 
               return (
                 <div
-                  className="contract-card"
+                  className="contract-card stagger-in"
                   key={`${c.area}-${c.id}`}
                   onClick={() => setSelected(c)}
-                  style={{ cursor: "pointer" }}
+                  style={{ cursor: "pointer", "--stagger-i": i }}
                 >
                   <div className="contract-card-main">
                     {/* Tenant */}

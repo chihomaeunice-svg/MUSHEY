@@ -15,6 +15,7 @@ import {
   contractStatus,
   fmtTZS,
 } from "../utils/Revenuecalc";
+import { useCountUp } from "../utils/useCountUp";
 import "../styles/reports.css";
 
 const COLORS = [
@@ -29,8 +30,15 @@ function Reports() {
   const [allProps,    setAllProps]    = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [period,      setPeriod]      = useState(6);
+  const [mounted,     setMounted]     = useState(false);
 
   useEffect(() => { loadReports(); }, [membership?.companyId]);
+
+  useEffect(() => {
+    if (loading) return;
+    const t = setTimeout(() => setMounted(true), 40);
+    return () => clearTimeout(t);
+  }, [loading]);
 
   const loadReports = async () => {
     if (!membership?.companyId) return;
@@ -97,8 +105,14 @@ function Reports() {
   const totalProps       = areaReports.reduce((s, r) => s + r.properties, 0);
   const maxMonthly       = Math.max(...areaReports.map((r) => r.monthlyBase), 1);
 
+  const animatedCollected   = useCountUp(totalCollected);
+  const animatedOutstanding = useCountUp(totalOutstanding);
+  const animatedMonthly     = useCountUp(totalMonthly);
+  const animatedPeriod      = useCountUp(periodRevenue);
+  const animatedYear        = useCountUp(yearRevenue);
+
   return (
-    <div className="reports">
+    <div className={`reports ${mounted ? "mounted" : ""}`}>
       <div className="reports-header-row">
         <div className="page-header" style={{ marginBottom: 0 }}>
           <h1>Reports & Profit</h1>
@@ -120,46 +134,46 @@ function Reports() {
       {/* Top metrics */}
       <div className="profit-overview">
 
-        <div className="profit-metric">
+        <div className="profit-metric stagger-in" style={{ "--stagger-i": 0 }}>
           <CheckCircle className="metric-icon" size={40} weight="fill" />
           <div className="metric-label">Collected This Month</div>
-          <div className="metric-value green">{fmtTZS(totalCollected)}</div>
+          <div className="metric-value green">{fmtTZS(animatedCollected)}</div>
           <div className="metric-change">
             Tenants marked as paid in Payments page
           </div>
         </div>
 
-        <div className="profit-metric">
+        <div className="profit-metric stagger-in" style={{ "--stagger-i": 1 }}>
           <WarningCircle className="metric-icon" size={40} weight="fill" />
           <div className="metric-label">Still Owed This Month</div>
-          <div className="metric-value red">{fmtTZS(totalOutstanding)}</div>
+          <div className="metric-value red">{fmtTZS(animatedOutstanding)}</div>
           <div className="metric-change">
             Tenants not yet marked as paid
           </div>
         </div>
 
-        <div className="profit-metric">
+        <div className="profit-metric stagger-in" style={{ "--stagger-i": 2 }}>
           <House className="metric-icon" size={40} weight="fill" />
           <div className="metric-label">Total Monthly Rent</div>
-          <div className="metric-value">{fmtTZS(totalMonthly)}</div>
+          <div className="metric-value">{fmtTZS(animatedMonthly)}</div>
           <div className="metric-change">
             If all {totalProps} tenants pay this month
           </div>
         </div>
 
-        <div className="profit-metric">
+        <div className="profit-metric stagger-in" style={{ "--stagger-i": 3 }}>
           <CalendarBlank className="metric-icon" size={40} weight="fill" />
           <div className="metric-label">Next {period} Months (if full)</div>
-          <div className="metric-value gold">{fmtTZS(periodRevenue)}</div>
+          <div className="metric-value gold">{fmtTZS(animatedPeriod)}</div>
           <div className="metric-change">
             Based on active contracts × {period} months
           </div>
         </div>
 
-        <div className="profit-metric">
+        <div className="profit-metric stagger-in" style={{ "--stagger-i": 4 }}>
           <TrendUp className="metric-icon" size={40} weight="fill" />
           <div className="metric-label">Full Year {new Date().getFullYear()} Income</div>
-          <div className="metric-value gold">{fmtTZS(yearRevenue)}</div>
+          <div className="metric-value gold">{fmtTZS(animatedYear)}</div>
           <div className="metric-change">
             Jan – Dec {new Date().getFullYear()} across all contracts
           </div>
@@ -192,7 +206,7 @@ function Reports() {
             const fwdRevenue = r.props.reduce((s, p) =>
               s + revenueForPeriod(p.rent, p.contractStart, p.contractEnd, period), 0);
             return (
-              <div className="breakdown-row" key={r.area}>
+              <div className="breakdown-row stagger-in" key={r.area} style={{ "--stagger-i": i }}>
                 <div className="area-name-cell">
                   <div className="area-dot" style={{ background: COLORS[i % COLORS.length] }} />
                   {r.area}

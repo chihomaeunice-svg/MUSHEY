@@ -34,8 +34,15 @@ function Properties({ setCurrentPage }) {
   const [filterArea, setFilterArea] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [saving, setSaving]         = useState(false);
+  const [mounted, setMounted]       = useState(false);
 
   useEffect(() => { loadProperties(); }, [membership?.companyId]);
+
+  useEffect(() => {
+    if (loading) return;
+    const t = setTimeout(() => setMounted(true), 40);
+    return () => clearTimeout(t);
+  }, [loading]);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -178,7 +185,7 @@ function Properties({ setCurrentPage }) {
   }
 
   return (
-    <div className="properties">
+    <div className={`properties ${mounted ? "mounted" : ""}`}>
       <div className="page-header">
         <h1>Properties</h1>
         <p>All houses and shops across every area</p>
@@ -254,8 +261,8 @@ function Properties({ setCurrentPage }) {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((p) => (
-                  <tr key={p.id}>
+                {filtered.map((p, i) => (
+                  <tr key={p.id} className="stagger-fade" style={{ "--stagger-i": i }}>
                     <td>{p.area}</td>
                     <td>
                       <div className="tenant-cell">

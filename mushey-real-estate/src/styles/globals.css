@@ -336,3 +336,39 @@ tbody tr:hover td { background: var(--surface2); }
   color: var(--text-sub);
   font-size: 14px;
 }
+
+/* Shared staggered mount-in — pair a root ".mounted" class (added ~40ms
+   after data loads) with ".stagger-in" on each item, using --stagger-i
+   for its position in the list. */
+.stagger-in {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition-delay: calc(var(--stagger-i, 0) * 45ms);
+}
+
+.mounted .stagger-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stagger-in {
+    transition-duration: 0.01ms;
+    transition-delay: 0ms;
+  }
+}
+
+/* Opacity-only variant for table rows — transform support on <tr> is
+   inconsistent across engines, so rows just fade in instead of sliding. */
+.stagger-fade {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  transition-delay: calc(var(--stagger-i, 0) * 45ms);
+}
+
+.mounted .stagger-fade { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .stagger-fade { transition-duration: 0.01ms; transition-delay: 0ms; }
+}
