@@ -4,13 +4,15 @@ import { Buildings, WarningCircle } from "@phosphor-icons/react";
 import { login } from "../firebase/auth";
 import HeroSkyline from "../components/HeroSkyline";
 import ThemeToggle from "../components/ThemeToggle";
+import { useParallax } from "../utils/useParallax";
 import "../styles/login.css";
 
-export default function Login({ onSwitchToSignup }) {
+export default function Login({ onSwitchToSignup, onBack }) {
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [error, setError]       = useState("");
   const [loading, setLoading]   = useState(false);
+  const brandRef = useParallax(0.6);
 
   const handleSubmit = async (evt) => {
     evt.preventDefault();
@@ -29,15 +31,20 @@ export default function Login({ onSwitchToSignup }) {
     <div className="login-page">
 
       {/* Left: Branding */}
-      <div className="login-brand">
+      <div className="login-brand" ref={brandRef}>
         <HeroSkyline />
-        <div className="brand-logo">
+        <button
+          type="button"
+          className="brand-logo brand-logo-btn"
+          onClick={onBack}
+          disabled={!onBack}
+        >
           <div className="logo-box"><Buildings size={20} weight="fill" /></div>
           <div className="logo-text">
             <h1>Mushey Real Estate</h1>
             <span>Property Management</span>
           </div>
-        </div>
+        </button>
 
         <div className="brand-headline">
           <h2>Manage your<br /><span>properties</span><br />with ease.</h2>

@@ -1,0 +1,470 @@
+/* landing.css — public marketing homepage */
+
+.landing {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ── Nav ── */
+.landing-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 40px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.landing-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.landing-nav-logo {
+  width: 32px;
+  height: 32px;
+  background: var(--accent);
+  color: #fff8f4;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.landing-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ── Hero: warm gradient blend (accent + neutral, theme-correct in both
+   modes since it's built from the theme's own tokens) + a screenshot
+   collage instead of an illustrated scene ── */
+.landing-hero {
+  position: relative;
+  padding: 80px 40px;
+  background:
+    radial-gradient(ellipse 55% 65% at 88% 12%, var(--accent-dim), transparent 65%),
+    radial-gradient(ellipse 45% 45% at 8% 95%, var(--blue-dim), transparent 60%),
+    var(--bg);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 56px;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Decorative skyline, tinted with the theme's own text color so it blends
+   into the gradient instead of reintroducing a fixed dark scene */
+.landing-skyline {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: var(--text);
+  opacity: 0.06;
+  pointer-events: none;
+  transform: translate(calc(var(--px, 0) * -10px), calc(var(--py, 0) * -6px));
+  transition: transform 0.2s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-skyline { transform: none; }
+}
+
+:root[data-theme="dark"] .landing-skyline  { opacity: 0.09; }
+:root[data-theme="light"] .landing-skyline { opacity: 0.06; }
+
+.landing-skyline-drift {
+  animation: landing-skyline-drift 60s ease-in-out infinite;
+  transform-origin: 50% 100%;
+}
+
+@keyframes landing-skyline-drift {
+  0%, 100% { transform: translateX(0); }
+  50%       { transform: translateX(-1%); }
+}
+
+.landing-skyline-flicker {
+  animation: landing-skyline-flicker 6s ease-in-out infinite;
+}
+
+@keyframes landing-skyline-flicker {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-skyline-drift, .landing-skyline-flicker { animation: none; }
+}
+
+.landing-hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 520px;
+}
+
+.landing-eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent);
+}
+
+.landing-hero-content h1 {
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: 600;
+  line-height: 1.12;
+  margin: 14px 0 18px;
+  letter-spacing: -0.5px;
+  color: var(--text);
+  text-wrap: balance;
+}
+
+.landing-hero-content p {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-sub);
+  margin-bottom: 28px;
+}
+
+.landing-hero-actions {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.landing-hero-trust {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  font-size: 12px;
+  color: var(--text-sub);
+}
+
+.landing-hero-trust span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.landing-hero-trust svg {
+  color: var(--green);
+}
+
+/* Screenshot collage */
+.landing-hero-visual {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+/* Reads --px/--py set by useParallax on this element and nudges the whole
+   collage toward the cursor, independent of each photo's own rotate/float
+   transform (which live one level down, so they don't fight this one). */
+.landing-parallax-wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(calc(var(--px, 0) * 22px), calc(var(--py, 0) * 22px));
+  transition: transform 0.15s ease-out;
+}
+
+.landing-shot {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  box-shadow: 0 24px 60px #00000030;
+  transition: box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.landing-shot:hover {
+  box-shadow: 0 28px 70px #00000045;
+  filter: brightness(1.04);
+}
+
+.landing-shot-main {
+  max-width: 480px;
+  transform: rotate(-2deg);
+}
+
+.landing-shot-accent {
+  position: absolute;
+  width: 220px;
+  bottom: -32px;
+  left: -16px;
+  transform: rotate(4deg);
+  box-shadow: 0 18px 44px #00000040;
+}
+
+.landing-shot-house {
+  position: absolute;
+  width: 150px;
+  top: -28px;
+  left: 10px;
+  transform: rotate(-7deg);
+  box-shadow: 0 16px 36px #00000040;
+  z-index: 1;
+}
+
+.landing-shot-main.landing-float {
+  animation: landing-float-main 5s ease-in-out infinite;
+}
+
+@keyframes landing-float-main {
+  0%, 100% { transform: rotate(-2deg) translateY(0); }
+  50%       { transform: rotate(-2deg) translateY(-9px); }
+}
+
+.landing-shot-accent.landing-float {
+  animation: landing-float-accent 5s ease-in-out infinite;
+  animation-delay: 1.4s;
+}
+
+@keyframes landing-float-accent {
+  0%, 100% { transform: rotate(4deg) translateY(0); }
+  50%       { transform: rotate(4deg) translateY(-9px); }
+}
+
+.landing-shot-house.landing-float {
+  animation: landing-float-house 5s ease-in-out infinite;
+  animation-delay: 0.7s;
+}
+
+@keyframes landing-float-house {
+  0%, 100% { transform: rotate(-7deg) translateY(0); }
+  50%       { transform: rotate(-7deg) translateY(-9px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-shot-main.landing-float,
+  .landing-shot-accent.landing-float,
+  .landing-shot-house.landing-float {
+    animation: none;
+  }
+  .landing-parallax-wrap { transform: none; }
+}
+
+@media (max-width: 900px) {
+  .landing-hero { grid-template-columns: 1fr; padding: 56px 20px; gap: 40px; }
+  .landing-hero-content { max-width: 100%; }
+  .landing-hero-visual { min-height: 320px; margin-top: 32px; }
+  .landing-shot-accent { width: 160px; left: 6px; bottom: -22px; }
+  .landing-shot-house { width: 110px; top: -18px; left: -4px; }
+}
+
+/* ── Shared section header ── */
+.landing-section-header {
+  max-width: 640px;
+  margin: 0 auto 40px;
+  text-align: center;
+}
+
+.landing-section-header h2 {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: -0.3px;
+}
+
+.landing-section-header p {
+  color: var(--text-sub);
+  font-size: 14px;
+}
+
+/* ── Features (zig-zag, not equal 3-card row), warm tinted background ── */
+.landing-features {
+  padding: 80px 40px;
+  background: linear-gradient(180deg, var(--surface2) 0%, var(--bg) 100%);
+}
+
+.landing-feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.landing-feature {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+
+.landing-feature.reverse {
+  flex-direction: row-reverse;
+}
+
+.landing-feature-icon {
+  flex-shrink: 0;
+  width: 76px;
+  height: 76px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, var(--accent-dim), var(--blue-dim));
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.landing-feature-text h3 {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.landing-feature-text p {
+  color: var(--text-sub);
+  font-size: 14px;
+  line-height: 1.7;
+  max-width: 460px;
+}
+
+@media (max-width: 700px) {
+  .landing-feature, .landing-feature.reverse {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 16px;
+  }
+}
+
+/* ── Steps (a real sequence, so numbering is justified) ── */
+.landing-steps {
+  position: relative;
+  overflow: hidden;
+  padding: 60px 40px 80px;
+  background:
+    radial-gradient(ellipse 50% 60% at 90% 100%, var(--accent-dim), transparent 65%),
+    var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.landing-steps-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  max-width: 1000px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.landing-step { text-align: center; }
+
+.landing-step-num {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff8f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 16px;
+  margin: 0 auto 16px;
+}
+
+.landing-step h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.landing-step p  { color: var(--text-sub); font-size: 13px; line-height: 1.6; }
+
+@media (max-width: 700px) {
+  .landing-steps-list { grid-template-columns: 1fr; gap: 36px; }
+}
+
+/* ── Pricing ── */
+.landing-pricing {
+  padding: 80px 40px;
+  display: flex;
+  justify-content: center;
+  background: linear-gradient(180deg, var(--bg) 0%, var(--surface2) 100%);
+}
+
+.landing-pricing-card {
+  max-width: 420px;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 40px 36px;
+  box-shadow: var(--shadow);
+}
+
+.landing-pricing-amount {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 38px;
+  font-weight: 800;
+  color: var(--accent);
+  background: var(--accent-dim);
+  padding: 8px 20px;
+  border-radius: 99px;
+  margin-bottom: 18px;
+}
+
+.landing-pricing-amount span {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-sub);
+}
+
+.landing-pricing-card p {
+  color: var(--text-sub);
+  font-size: 13px;
+  line-height: 1.7;
+  margin-bottom: 22px;
+}
+
+/* ── Footer ── */
+.landing-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 40px;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.landing-footer-link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+@media (max-width: 700px) {
+  .landing-nav { padding: 14px 20px; }
+  .landing-nav-actions { gap: 8px; }
+  .landing-features { padding: 56px 20px; }
+  .landing-pricing { padding: 56px 20px; }
+  .landing-footer { padding: 20px; flex-direction: column; gap: 10px; text-align: center; }
+}
