@@ -1,5 +1,5 @@
 // src/pages/Layout.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import {
   SquaresFour, House, FileText, CreditCard, ChartBar, Wallet, Gear,
@@ -46,8 +46,36 @@ function Layout({ currentPage, setCurrentPage, children }) {
   const [allProperties, setAllProperties]   = useState([]);
   const [showNotifPanel, setShowNotifPanel] = useState(false);
   const [sidebarOpen, setSidebarOpen]       = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const touchStart = useRef(null);
 
   const locked = company?.subscriptionStatus === "locked";
+  const companyInitial = (company?.name || "M").trim().charAt(0).toUpperCase() || "M";
+
+  // Pages reachable right now, in nav order — used for swipe navigation.
+  const swipablePages = navItems
+    .filter((item) => !(locked && !ALLOWED_WHEN_LOCKED.includes(item.page)))
+    .map((item) => item.page);
+
+  const handleTouchStart = (e) => {
+    const t = e.touches[0];
+    touchStart.current = { x: t.clientX, y: t.clientY };
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!touchStart.current) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStart.current.x;
+    const dy = t.clientY - touchStart.current.y;
+    touchStart.current = null;
+
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+
+    const idx = swipablePages.indexOf(currentPage);
+    if (idx === -1) return;
+    if (dx < 0 && idx < swipablePages.length - 1) setCurrentPage(swipablePages[idx + 1]);
+    if (dx > 0 && idx > 0) setCurrentPage(swipablePages[idx - 1]);
+  };
 
   const today = new Date().toLocaleDateString("en-GB", {
     weekday: "short", day: "numeric", month: "short", year: "numeric",
@@ -169,7 +197,36 @@ function Layout({ currentPage, setCurrentPage, children }) {
             )}
 
             <span className="date-tag">{today}</span>
-            <div className="admin-avatar">M</div>
+
+            <button
+              className="admin-avatar"
+              onClick={() => setShowProfileMenu((v) => !v)}
+              aria-label="Account menu"
+              aria-expanded={showProfileMenu}
+            >
+              {companyInitial}
+            </button>
+
+            {showProfileMenu && (
+              <>
+                <div className="profile-menu-overlay" onClick={() => setShowProfileMenu(false)} />
+                <div className="profile-menu">
+                  <div className="profile-menu-header">
+                    <div className="profile-menu-name">{company?.name || "Your company"}</div>
+                    <div className="profile-menu-email">{company?.contactEmail}</div>
+                  </div>
+                  <button
+                    className="profile-menu-item"
+                    onClick={() => { setCurrentPage("settings"); setShowProfileMenu(false); }}
+                  >
+                    <Gear size={15} weight="regular" /> Account Settings
+                  </button>
+                  <button className="profile-menu-item danger" onClick={handleLogout}>
+                    <SignOut size={15} weight="regular" /> Sign Out
+                  </button>
+                </div>
+              </>
+            )}
 
             {/* Notification panel dropdown */}
             {showNotifPanel && (
@@ -181,7 +238,11 @@ function Layout({ currentPage, setCurrentPage, children }) {
           </div>
         </header>
 
-        <main className="page-body">
+        <main
+          className="page-body"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           <SubscriptionBanner
             company={company}
             onGoToBilling={() => setCurrentPage("billing")}
@@ -190,7 +251,9 @@ function Layout({ currentPage, setCurrentPage, children }) {
             properties={allProperties}
             onReview={() => setCurrentPage("contracts")}
           />
-          {children}
+          <div className="page-transition" key={currentPage}>
+            {children}
+          </div>
         </main>
       </div>
 

@@ -4,7 +4,7 @@
 // is one enrollment the super-admin dashboard counts.
 
 import { useState } from "react";
-import { Buildings, WarningCircle } from "@phosphor-icons/react";
+import { ArrowLeft, Buildings, WarningCircle } from "@phosphor-icons/react";
 import { registerCompany } from "../firebase/company";
 import HeroSkyline from "../components/HeroSkyline";
 import ThemeToggle from "../components/ThemeToggle";
@@ -88,6 +88,11 @@ export default function Signup({ onSwitchToLogin, onBack }) {
 
       {/* Right: Form */}
       <div className="login-form-panel">
+        {onBack && (
+          <button type="button" className="login-back-btn" onClick={onBack}>
+            <ArrowLeft size={15} weight="bold" /> Back
+          </button>
+        )}
         <ThemeToggle className="login-theme-toggle" />
         <div className="login-box">
           <h2 className="login-title">Register your company</h2>

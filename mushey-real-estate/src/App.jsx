@@ -1,5 +1,7 @@
 // App.jsx
 import { useState } from "react";
+import { SignOut } from "@phosphor-icons/react";
+import { logout } from "./firebase/auth";
 import Layout from "./pages/Layout";
 import Dashboard from "./pages/Dashboard";
 import Properties from "./pages/Properties";
@@ -27,8 +29,11 @@ function Screens() {
 
   if (error || !membership) {
     return (
-      <div className="app-loading">
-        Your account isn't linked to a company yet. Please contact support.
+      <div className="app-loading app-loading-stuck">
+        <p>Your account isn't linked to a company yet. Please contact support.</p>
+        <button className="btn btn-ghost" onClick={() => logout()}>
+          <SignOut size={15} weight="regular" /> Sign Out
+        </button>
       </div>
     );
   }

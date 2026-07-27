@@ -1,6 +1,6 @@
 // src/pages/Login.jsx
 import { useState } from "react";
-import { Buildings, WarningCircle } from "@phosphor-icons/react";
+import { ArrowLeft, Buildings, WarningCircle } from "@phosphor-icons/react";
 import { login } from "../firebase/auth";
 import HeroSkyline from "../components/HeroSkyline";
 import ThemeToggle from "../components/ThemeToggle";
@@ -72,6 +72,11 @@ export default function Login({ onSwitchToSignup, onBack }) {
 
       {/* Right: Form */}
       <div className="login-form-panel">
+        {onBack && (
+          <button type="button" className="login-back-btn" onClick={onBack}>
+            <ArrowLeft size={15} weight="bold" /> Back
+          </button>
+        )}
         <ThemeToggle className="login-theme-toggle" />
         <div className="login-box">
           <h2 className="login-title">Welcome back</h2>

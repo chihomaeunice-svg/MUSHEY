@@ -337,6 +337,13 @@ tbody tr:hover td { background: var(--surface2); }
   font-size: 14px;
 }
 
+.app-loading-stuck {
+  flex-direction: column;
+  gap: 20px;
+  text-align: center;
+  padding: 20px;
+}
+
 /* Shared staggered mount-in — pair a root ".mounted" class (added ~40ms
    after data loads) with ".stagger-in" on each item, using --stagger-i
    for its position in the list. */
