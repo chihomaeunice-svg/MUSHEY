@@ -10,8 +10,8 @@ const firebaseConfig = {
   projectId: "mushey-real-estate",
   storageBucket: "mushey-real-estate.firebasestorage.app",
   messagingSenderId: "126671735659",
-  appId: "1:126671735659:web:d678d1c6945d898e551a2e",
-  measurementId: "G-D566GQYTCM"
+  appId: "1:126671735659:web:b8a6c6e7eadd0b62551a2e",
+  measurementId: "G-K76PCRP629"
 };
 
 export const app = initializeApp(firebaseConfig);
