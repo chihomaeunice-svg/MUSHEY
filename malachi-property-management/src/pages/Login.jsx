@@ -1,7 +1,8 @@
 // src/pages/Login.jsx
 import { useState } from "react";
-import { ArrowLeft, Buildings, WarningCircle } from "@phosphor-icons/react";
+import { ArrowLeft, WarningCircle } from "@phosphor-icons/react";
 import { login } from "../firebase/auth";
+import BrandMark from "../components/BrandMark";
 import HeroSkyline from "../components/HeroSkyline";
 import ThemeToggle from "../components/ThemeToggle";
 import { useParallax } from "../utils/useParallax";
@@ -39,9 +40,9 @@ export default function Login({ onSwitchToSignup, onBack }) {
           onClick={onBack}
           disabled={!onBack}
         >
-          <div className="logo-box"><Buildings size={20} weight="fill" /></div>
+          <div className="logo-box"><BrandMark size={20} /></div>
           <div className="logo-text">
-            <h1>Mushey Real Estate</h1>
+            <h1>Malachi</h1>
             <span>Property Management</span>
           </div>
         </button>
@@ -90,7 +91,7 @@ export default function Login({ onSwitchToSignup, onBack }) {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@mushey.co.tz"
+                placeholder="admin@malachi.co.tz"
                 required
                 autoComplete="email"
               />
@@ -129,7 +130,7 @@ export default function Login({ onSwitchToSignup, onBack }) {
           </p>
 
           <div className="login-divider">
-            <span>Mushey Real Estate</span>
+            <span>Malachi Property Management</span>
           </div>
 
           <p className="login-footer-note">

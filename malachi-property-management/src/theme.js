@@ -3,7 +3,7 @@
 // prefers-color-scheme tokens in globals.css; falls back to the OS
 // preference when the user hasn't picked explicitly.
 
-const STORAGE_KEY = "mushey-theme";
+const STORAGE_KEY = "malachi-theme";
 
 export function getStoredTheme() {
   return localStorage.getItem(STORAGE_KEY); // "light" | "dark" | null

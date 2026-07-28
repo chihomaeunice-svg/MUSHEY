@@ -1,7 +1,7 @@
 // pages/Billing.jsx
 // Subscription status + payment history for this company (35,000 TZS/month).
 // No payment gateway is wired up yet — payment is arranged directly with
-// Mushey and the subscription period is extended on the account manually.
+// Malachi and the subscription period is extended on the account manually.
 
 import { useEffect, useState } from "react";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
@@ -59,7 +59,7 @@ function Billing() {
     <div className="billing">
       <div className="page-header">
         <h1>Billing</h1>
-        <p>Mushey subscription for {company.name}</p>
+        <p>Malachi subscription for {company.name}</p>
       </div>
 
       <div className="billing-grid">
@@ -82,7 +82,7 @@ function Billing() {
           </div>
 
           <p className="billing-message">
-            To pay, renew, or upgrade your subscription, contact Mushey directly —
+            To pay, renew, or upgrade your subscription, contact Malachi directly —
             your account will be updated once payment is confirmed.
           </p>
         </div>

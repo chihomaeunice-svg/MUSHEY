@@ -1,12 +1,13 @@
 // src/pages/Landing.jsx
 // Public marketing homepage — shown before anyone signs in or registers.
-// Explains what Mushey does and funnels into Signup (trial) or Login.
+// Explains what Malachi does and funnels into Signup (trial) or Login.
 
 import { useEffect, useState } from "react";
 import {
-  Buildings, House, CreditCard, BellRinging, ChartBar,
+  House, CreditCard, BellRinging, ChartBar,
   CheckCircle, ArrowRight,
 } from "@phosphor-icons/react";
+import BrandMark from "../components/BrandMark";
 import ThemeToggle from "../components/ThemeToggle";
 import LandingSkyline from "../components/LandingSkyline";
 import { useParallax } from "../utils/useParallax";
@@ -55,8 +56,8 @@ export default function Landing({ onGetStarted, onSignIn }) {
     <div className={`landing ${mounted ? "mounted" : ""}`}>
       <header className="landing-nav">
         <div className="landing-nav-brand">
-          <div className="landing-nav-logo"><Buildings size={18} weight="fill" /></div>
-          <span>Mushey Real Estate</span>
+          <div className="landing-nav-logo"><BrandMark size={18} /></div>
+          <span>Malachi Property Management</span>
         </div>
         <div className="landing-nav-actions">
           <ThemeToggle />
@@ -92,12 +93,12 @@ export default function Landing({ onGetStarted, onSignIn }) {
             <img
               className="landing-shot landing-shot-house landing-float"
               src="/screenshots/house-preview.png"
-              alt="Illustration of a house at golden hour, representing a property managed in Mushey"
+              alt="Illustration of a house at golden hour, representing a property managed in Malachi"
             />
             <img
               className="landing-shot landing-shot-main landing-float"
               src="/screenshots/dashboard-preview.png"
-              alt="Mushey dashboard showing a 75% rent collection rate, property and tenant counts, and rent by area"
+              alt="Malachi dashboard showing a 75% rent collection rate, property and tenant counts, and rent by area"
             />
             <img
               className="landing-shot landing-shot-accent landing-float"
@@ -150,7 +151,7 @@ export default function Landing({ onGetStarted, onSignIn }) {
       </section>
 
       <footer className="landing-footer">
-        <span>Mushey Real Estate © {new Date().getFullYear()}</span>
+        <span>Malachi Property Management © {new Date().getFullYear()}</span>
         <button className="landing-footer-link" onClick={onSignIn}>Sign in</button>
       </footer>
     </div>

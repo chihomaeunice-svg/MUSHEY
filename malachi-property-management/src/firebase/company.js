@@ -1,5 +1,5 @@
 // src/firebase/company.js
-// Multi-tenant helpers: every landlord/company that signs up ("installs" Mushey)
+// Multi-tenant helpers: every landlord/company that signs up ("installs" Malachi)
 // gets its own companies/{companyId} document plus a users/{uid} record that
 // points at it. All property data lives under companies/{companyId}/....
 
@@ -42,13 +42,13 @@ export async function registerCompany({ companyName, tin, phone, ownerName, emai
     plan: "trial",
     areas: [],
     requireReceiptUpload: false,
-    receiptPrefix: (companyName || "MSH").slice(0, 3).toUpperCase(),
+    receiptPrefix: (companyName || "MAL").slice(0, 3).toUpperCase(),
     nextReceiptNumber: 1,
     // Subscription billing (companies/{companyId}) — these fields are only
     // ever changed server-side (Cloud Functions) after this initial write;
     // firestore.rules blocks clients from touching them afterward. No
     // payment gateway is wired up yet: payment is arranged directly with
-    // Mushey and currentPeriodEnd is extended on the account manually.
+    // Malachi and currentPeriodEnd is extended on the account manually.
     subscriptionStatus: "trialing",
     subscriptionAmount: 35000,
     currentPeriodEnd: trialEnd.toISOString().slice(0, 10),

@@ -51,7 +51,7 @@ function SuperAdmin() {
     <div className="superadmin">
       <header className="sa-topbar">
         <div>
-          <h1>Mushey — Super Admin</h1>
+          <h1>Malachi — Super Admin</h1>
           <p>Every company enrolled on the platform</p>
         </div>
         <button className="btn btn-ghost" onClick={() => logout()}><SignOut size={15} /> Sign Out</button>

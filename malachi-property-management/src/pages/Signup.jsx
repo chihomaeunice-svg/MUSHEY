@@ -4,8 +4,9 @@
 // is one enrollment the super-admin dashboard counts.
 
 import { useState } from "react";
-import { ArrowLeft, Buildings, WarningCircle } from "@phosphor-icons/react";
+import { ArrowLeft, WarningCircle } from "@phosphor-icons/react";
 import { registerCompany } from "../firebase/company";
+import BrandMark from "../components/BrandMark";
 import HeroSkyline from "../components/HeroSkyline";
 import ThemeToggle from "../components/ThemeToggle";
 import { useParallax } from "../utils/useParallax";
@@ -69,9 +70,9 @@ export default function Signup({ onSwitchToLogin, onBack }) {
           onClick={onBack}
           disabled={!onBack}
         >
-          <div className="logo-box"><Buildings size={20} weight="fill" /></div>
+          <div className="logo-box"><BrandMark size={20} /></div>
           <div className="logo-text">
-            <h1>Mushey Real Estate</h1>
+            <h1>Malachi</h1>
             <span>Property Management</span>
           </div>
         </button>
@@ -81,7 +82,7 @@ export default function Signup({ onSwitchToLogin, onBack }) {
           <p>
             Register your company to get your own private workspace —
             tenants, contracts, payments, and receipts, separate from
-            every other company on Mushey.
+            every other company on Malachi.
           </p>
         </div>
       </div>
@@ -105,7 +106,7 @@ export default function Signup({ onSwitchToLogin, onBack }) {
                 id="companyName"
                 value={form.companyName}
                 onChange={(e) => set("companyName", e.target.value)}
-                placeholder="e.g. Mushey Real Estate Ltd"
+                placeholder="e.g. Malachi Property Management Ltd"
                 required
               />
             </div>
