@@ -453,6 +453,12 @@
   font-size: 12px;
 }
 
+.landing-footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .landing-footer-link {
   background: none;
   border: none;

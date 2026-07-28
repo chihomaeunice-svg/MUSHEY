@@ -151,7 +151,9 @@ export default function Landing({ onGetStarted, onSignIn }) {
       </section>
 
       <footer className="landing-footer">
-        <span>Malachi Property Management © {new Date().getFullYear()}</span>
+        <span className="landing-footer-brand">
+          <BrandMark size={16} /> Malachi Property Management © {new Date().getFullYear()}
+        </span>
         <button className="landing-footer-link" onClick={onSignIn}>Sign in</button>
       </footer>
     </div>

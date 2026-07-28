@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { SignOut, Buildings, CheckCircle, Users } from "@phosphor-icons/react";
 import { logout } from "../firebase/company";
 import { listAllCompanies, countCompanyProperties } from "../firebase/company";
+import BrandMark from "../components/BrandMark";
 import "../styles/superadmin.css";
 
 function fmtDate(ts) {
@@ -50,9 +51,12 @@ function SuperAdmin() {
   return (
     <div className="superadmin">
       <header className="sa-topbar">
-        <div>
-          <h1>Malachi — Super Admin</h1>
-          <p>Every company enrolled on the platform</p>
+        <div className="sa-topbar-brand">
+          <div className="sa-topbar-logo"><BrandMark size={22} /></div>
+          <div>
+            <h1>Malachi — Super Admin</h1>
+            <p>Every company enrolled on the platform</p>
+          </div>
         </div>
         <button className="btn btn-ghost" onClick={() => logout()}><SignOut size={15} /> Sign Out</button>
       </header>
