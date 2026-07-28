@@ -3,12 +3,13 @@ import { useEffect, useRef, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import {
   SquaresFour, House, FileText, CreditCard, ChartBar, Wallet, Gear,
-  Buildings, SignOut, List, Bell,
+  SignOut, List, Bell,
 } from "@phosphor-icons/react";
 import { db } from "../firebase/firebaseConfig";
 import { logout } from "../firebase/auth";
 import { checkAndNotify } from "../utils/Notifications";
 import { useCompany } from "../components/CompanyProvider";
+import BrandMark from "../components/BrandMark";
 import ExpiryBanner from "../components/ExpiryBanner";
 import SubscriptionBanner from "../components/SubscriptionBanner";
 import NotificationPanel from "../components/Notificationpanel";
@@ -105,7 +106,7 @@ function Layout({ currentPage, setCurrentPage, children }) {
   }, [membership?.companyId]);
 
   const handleLogout = async () => {
-    if (window.confirm(`Sign out of ${company?.name || "Mushey Real Estate"}?`)) {
+    if (window.confirm(`Sign out of ${company?.name || "Malachi Property Management"}?`)) {
       await logout();
     }
   };
@@ -128,8 +129,8 @@ function Layout({ currentPage, setCurrentPage, children }) {
       {/* ── SIDEBAR ── */}
       <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
         <div className="sidebar-logo">
-          <div className="logo-icon"><Buildings size={20} weight="fill" /></div>
-          <h2>{company?.name || "Mushey Real Estate"}</h2>
+          <div className="logo-icon"><BrandMark size={20} /></div>
+          <h2>{company?.name || "Malachi"}</h2>
           <span>Property Management</span>
         </div>
 
@@ -161,7 +162,7 @@ function Layout({ currentPage, setCurrentPage, children }) {
           <button className="logout-btn" onClick={handleLogout}>
             <SignOut size={16} weight="regular" /> Sign Out
           </button>
-          <p>Mushey Real Estate © 2025</p>
+          <p>Malachi Property Management © 2025</p>
         </div>
       </aside>
 

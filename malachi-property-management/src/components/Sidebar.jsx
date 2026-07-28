@@ -7,7 +7,7 @@ function Sidebar(){
 
     <div style={{padding:"20px", display:"flex", gap:"20px"}} className="sidebar">
 
-      <h2>Mushey</h2>
+      <h2>Malachi</h2>
 
       <Link to="/">Dashboard</Link>
       <Link to="/properties">Properties</Link>
