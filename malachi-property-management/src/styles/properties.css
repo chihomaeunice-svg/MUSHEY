@@ -219,6 +219,23 @@
   color: var(--accent);
 }
 
+.fee-included-check {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  letter-spacing: normal !important;
+  color: var(--text) !important;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+.fee-included-check input[type="checkbox"] {
+  width: auto;
+}
+
 /* Import from CSV modal */
 .import-modal {
   max-width: 680px;

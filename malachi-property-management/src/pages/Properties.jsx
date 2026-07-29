@@ -19,6 +19,8 @@ const emptyForm = {
   area: "", type: "", propertyName: "", status: "occupied", tenantName: "",
   rent: "", contractStart: "", contractEnd: "", phone: "", notes: "",
   idType: "", idNumber: "", idPhotoUrl: "",
+  cleaningIncluded: false, cleaningFee: "",
+  waterIncluded: false, waterFee: "",
 };
 
 function Properties({ setCurrentPage }) {
@@ -77,6 +79,8 @@ function Properties({ setCurrentPage }) {
       contractStart: p.contractStart, contractEnd: p.contractEnd,
       phone: p.phone || "", notes: p.notes || "",
       idType: p.idType || "", idNumber: p.idNumber || "", idPhotoUrl: p.idPhotoUrl || "",
+      cleaningIncluded: !!p.cleaningIncluded, cleaningFee: p.cleaningFee || "",
+      waterIncluded: !!p.waterIncluded, waterFee: p.waterFee || "",
     });
     setEditMode(true);
     setEditId(p.id);
@@ -108,6 +112,10 @@ function Properties({ setCurrentPage }) {
         idType: form.idType,
         idNumber: form.idNumber,
         idPhotoUrl: form.idPhotoUrl,
+        cleaningIncluded: form.cleaningIncluded,
+        cleaningFee: form.cleaningIncluded ? "" : form.cleaningFee,
+        waterIncluded: form.waterIncluded,
+        waterFee: form.waterIncluded ? "" : form.waterFee,
       };
 
       if (editMode) {
@@ -453,6 +461,45 @@ function Properties({ setCurrentPage }) {
                   value={form.rent}
                   onChange={(e) => set("rent", e.target.value)}
                 />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="fee-included-check">
+                    <input
+                      type="checkbox"
+                      checked={form.cleaningIncluded}
+                      onChange={(e) => set("cleaningIncluded", e.target.checked)}
+                    />
+                    Cleaning fee included in rent
+                  </label>
+                  {!form.cleaningIncluded && (
+                    <input
+                      type="number"
+                      placeholder="Cleaning fee (TZS/month)"
+                      value={form.cleaningFee}
+                      onChange={(e) => set("cleaningFee", e.target.value)}
+                    />
+                  )}
+                </div>
+                <div className="form-group">
+                  <label className="fee-included-check">
+                    <input
+                      type="checkbox"
+                      checked={form.waterIncluded}
+                      onChange={(e) => set("waterIncluded", e.target.checked)}
+                    />
+                    Water fee included in rent
+                  </label>
+                  {!form.waterIncluded && (
+                    <input
+                      type="number"
+                      placeholder="Water fee (TZS/month)"
+                      value={form.waterFee}
+                      onChange={(e) => set("waterFee", e.target.value)}
+                    />
+                  )}
+                </div>
               </div>
 
               <div className="form-group">
