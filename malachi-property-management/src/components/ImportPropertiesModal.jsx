@@ -46,6 +46,11 @@ const normalizeHeader = (h) => String(h ?? "").trim().toLowerCase().replace(/[^a
 
 const CHUNK_SIZE = 400; // Firestore batches cap at 500 writes; leave headroom
 
+// Upsert key: same Area + Property Name is treated as "this row updates that
+// existing property" rather than creating a duplicate — so re-uploading a
+// corrected sheet fixes rent/fees in place instead of piling up copies.
+const matchKey = (area, propertyName) => `${area.trim().toLowerCase()}|||${propertyName.trim().toLowerCase()}`;
+
 function parseRows(text) {
   const table = parseCsv(text);
   if (table.length < 2) return { rows: [], unknownHeaders: [] };
@@ -91,7 +96,7 @@ function parseRows(text) {
   return { rows, unknownHeaders };
 }
 
-export default function ImportPropertiesModal({ companyId, existingAreas, onClose, onImported, refreshCompany }) {
+export default function ImportPropertiesModal({ companyId, existingAreas, existingProperties, onClose, onImported, refreshCompany }) {
   const [rows, setRows] = useState(null);
   const [unknownHeaders, setUnknownHeaders] = useState([]);
   const [fileName, setFileName] = useState("");
@@ -121,8 +126,16 @@ export default function ImportPropertiesModal({ companyId, existingAreas, onClos
     }
   };
 
-  const validRows = (rows || []).filter((r) => r.valid);
+  const existingByKey = new Map(
+    (existingProperties || []).map((p) => [matchKey(p.area || "", p.propertyName || ""), p.id])
+  );
+
   const invalidRows = (rows || []).filter((r) => !r.valid);
+  const validRows = (rows || [])
+    .filter((r) => r.valid)
+    .map((r) => ({ ...r, existingId: existingByKey.get(matchKey(r.data.area, r.data.propertyName)) || null }));
+  const newCount = validRows.filter((r) => !r.existingId).length;
+  const updateCount = validRows.filter((r) => r.existingId).length;
 
   const handleImport = async () => {
     if (validRows.length === 0) return;
@@ -132,13 +145,19 @@ export default function ImportPropertiesModal({ companyId, existingAreas, onClos
       for (let i = 0; i < validRows.length; i += CHUNK_SIZE) {
         const batch = writeBatch(db);
         for (const row of validRows.slice(i, i + CHUNK_SIZE)) {
-          batch.set(doc(propertiesCol), {
-            ...row.data,
-            rentPaid: false,
-            cleaningPaid: false,
-            waterPaid: false,
-            idVerified: false,
-          });
+          if (row.existingId) {
+            // Update in place — leaves rentPaid/cleaningPaid/waterPaid/idVerified
+            // untouched, since the CSV doesn't represent this month's paid state.
+            batch.update(doc(propertiesCol, row.existingId), row.data);
+          } else {
+            batch.set(doc(propertiesCol), {
+              ...row.data,
+              rentPaid: false,
+              cleaningPaid: false,
+              waterPaid: false,
+              idVerified: false,
+            });
+          }
         }
         await batch.commit();
       }
@@ -152,7 +171,7 @@ export default function ImportPropertiesModal({ companyId, existingAreas, onClos
         await refreshCompany?.();
       }
 
-      setResult({ imported: validRows.length, skipped: invalidRows.length });
+      setResult({ created: newCount, updated: updateCount, skipped: invalidRows.length });
       onImported?.();
     } catch (err) {
       setParseError("Import failed: " + err.message);
@@ -173,7 +192,8 @@ export default function ImportPropertiesModal({ companyId, existingAreas, onClos
           {result ? (
             <div className="empty-state">
               <p>
-                Imported <strong>{result.imported}</strong> {result.imported === 1 ? "property" : "properties"}.
+                Added <strong>{result.created}</strong> new {result.created === 1 ? "property" : "properties"}
+                {result.updated > 0 && <> and updated <strong>{result.updated}</strong> existing {result.updated === 1 ? "property" : "properties"}</>}.
                 {result.skipped > 0 && ` ${result.skipped} row${result.skipped === 1 ? "" : "s"} skipped — see details before closing.`}
               </p>
             </div>
@@ -183,7 +203,9 @@ export default function ImportPropertiesModal({ companyId, existingAreas, onClos
                 Upload a CSV with one row per property. Each landlord's spreadsheet can use any
                 of these column names (any order): Area, Type, Property Name, Status
                 (occupied/vacant), Tenant Name, Phone, Rent, Contract Start, Contract End, ID Type,
-                ID Number, Notes. Only Area and Property Name are required.
+                ID Number, Notes. Only Area and Property Name are required. A row whose Area +
+                Property Name matches an existing property updates it in place instead of creating
+                a duplicate — paid/verified status is left untouched either way.
               </p>
 
               <div className="import-actions-row">
@@ -206,7 +228,8 @@ export default function ImportPropertiesModal({ companyId, existingAreas, onClos
               {rows && (
                 <>
                   <div className="import-summary">
-                    <span className="badge active">{validRows.length} ready to import</span>
+                    {newCount > 0 && <span className="badge active">{newCount} new</span>}
+                    {updateCount > 0 && <span className="badge expiring">{updateCount} update existing</span>}
                     {invalidRows.length > 0 && (
                       <span className="badge expired">{invalidRows.length} skipped (missing required fields)</span>
                     )}
@@ -248,7 +271,10 @@ export default function ImportPropertiesModal({ companyId, existingAreas, onClos
               onClick={handleImport}
               disabled={!rows || validRows.length === 0 || importing}
             >
-              {importing ? "Importing…" : `Import ${validRows.length || ""} ${validRows.length === 1 ? "Property" : "Properties"}`}
+              {importing
+                ? "Importing…"
+                : `Import ${validRows.length || ""} ${validRows.length === 1 ? "Property" : "Properties"}`
+                  + (updateCount > 0 ? ` (${updateCount} update${updateCount === 1 ? "" : "s"})` : "")}
             </button>
           )}
         </div>

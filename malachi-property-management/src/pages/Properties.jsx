@@ -199,6 +199,7 @@ function Properties({ setCurrentPage }) {
           <ImportPropertiesModal
             companyId={membership.companyId}
             existingAreas={areas}
+            existingProperties={properties}
             refreshCompany={refreshCompany}
             onClose={() => setShowImport(false)}
             onImported={loadProperties}
@@ -525,6 +526,7 @@ function Properties({ setCurrentPage }) {
         <ImportPropertiesModal
           companyId={membership.companyId}
           existingAreas={areas}
+          existingProperties={properties}
           refreshCompany={refreshCompany}
           onClose={() => setShowImport(false)}
           onImported={loadProperties}
