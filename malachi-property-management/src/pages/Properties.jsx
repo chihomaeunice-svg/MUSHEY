@@ -4,11 +4,12 @@ import {
   doc, addDoc, updateDoc, collection, getDocs, deleteDoc,
 } from "firebase/firestore";
 import {
-  MagnifyingGlass, Plus, House, MapTrifold, PencilSimple, Trash, X, Buildings,
+  MagnifyingGlass, Plus, House, MapTrifold, PencilSimple, Trash, X, Buildings, UploadSimple,
 } from "@phosphor-icons/react";
 import { db } from "../firebase/firebaseConfig";
 import { useCompany } from "../components/CompanyProvider";
 import PhotoUpload from "../components/PhotoUpload";
+import ImportPropertiesModal from "../components/ImportPropertiesModal";
 import "../styles/properties.css";
 
 const PROPERTY_TYPES = ["House", "Shop", "Warehouse", "Yard", "Open Space"];
@@ -21,12 +22,13 @@ const emptyForm = {
 };
 
 function Properties({ setCurrentPage }) {
-  const { membership, company } = useCompany();
+  const { membership, company, refreshCompany } = useCompany();
   const areas = company?.areas || [];
 
   const [properties, setProperties] = useState([]);
   const [loading, setLoading]       = useState(true);
   const [showModal, setShowModal]   = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [editMode, setEditMode]     = useState(false);
   const [editId, setEditId]         = useState(null);
   const [form, setForm]             = useState(emptyForm);
@@ -176,10 +178,24 @@ function Properties({ setCurrentPage }) {
         <div className="empty-state">
           <div className="icon"><MapTrifold size={40} weight="thin" /></div>
           <p>You haven't added any areas yet — properties are organized by area.</p>
-          <button className="btn btn-primary" style={{ marginTop: 14 }} onClick={() => setCurrentPage?.("settings")}>
-            Add Your Areas in Settings
-          </button>
+          <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+            <button className="btn btn-primary" onClick={() => setCurrentPage?.("settings")}>
+              Add Your Areas in Settings
+            </button>
+            <button className="btn btn-ghost" onClick={() => setShowImport(true)}>
+              <UploadSimple size={15} /> Import from CSV instead
+            </button>
+          </div>
         </div>
+        {showImport && (
+          <ImportPropertiesModal
+            companyId={membership.companyId}
+            existingAreas={areas}
+            refreshCompany={refreshCompany}
+            onClose={() => setShowImport(false)}
+            onImported={loadProperties}
+          />
+        )}
       </div>
     );
   }
@@ -222,9 +238,14 @@ function Properties({ setCurrentPage }) {
             <option value="vacant">Vacant Only</option>
           </select>
         </div>
-        <button className="btn btn-primary" onClick={openAdd}>
-          <Plus size={15} weight="bold" /> Add Property
-        </button>
+        <div className="toolbar-right">
+          <button className="btn btn-ghost" onClick={() => setShowImport(true)}>
+            <UploadSimple size={15} /> Import from CSV
+          </button>
+          <button className="btn btn-primary" onClick={openAdd}>
+            <Plus size={15} weight="bold" /> Add Property
+          </button>
+        </div>
       </div>
 
       {/* Table */}
@@ -451,6 +472,16 @@ function Properties({ setCurrentPage }) {
             </div>
           </div>
         </div>
+      )}
+
+      {showImport && (
+        <ImportPropertiesModal
+          companyId={membership.companyId}
+          existingAreas={areas}
+          refreshCompany={refreshCompany}
+          onClose={() => setShowImport(false)}
+          onImported={loadProperties}
+        />
       )}
     </div>
   );
