@@ -10,6 +10,21 @@
   justify-content: space-between;
   margin-bottom: 28px;
 }
+.sa-topbar-brand {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.sa-topbar-logo {
+  width: 40px;
+  height: 40px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
 .sa-topbar h1 {
   font-size: 26px;
   font-weight: 800;

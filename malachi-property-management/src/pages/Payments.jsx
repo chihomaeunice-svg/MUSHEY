@@ -3,11 +3,12 @@ import { useState, useEffect } from "react";
 import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import {
   CheckCircle, WarningCircle, XCircle, Buildings, CreditCard,
-  House, Broom, Drop, Check,
+  House, Broom, Drop, Check, Receipt,
 } from "@phosphor-icons/react";
 import { db } from "../firebase/firebaseConfig";
 import { useCompany } from "../components/CompanyProvider";
 import RecordPaymentModal from "../components/RecordPaymentModal";
+import InvoiceModal from "../components/InvoiceModal";
 import { useCountUp } from "../utils/useCountUp";
 import "../styles/payments.css";
 
@@ -22,6 +23,7 @@ function Payments() {
   const [filterArea, setFilterArea] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [paymentModal, setPaymentModal] = useState(null); // { property, field, type }
+  const [invoiceProperty, setInvoiceProperty] = useState(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { loadProperties(); }, [membership?.companyId]);
@@ -66,9 +68,14 @@ function Payments() {
     setPaymentModal(null);
   };
 
+  // A fee that's included in rent is only ever as "paid" as the rent itself is.
+  const cleaningOk = (p) => p.cleaningIncluded ? p.rentPaid : p.cleaningPaid;
+  const waterOk = (p) => p.waterIncluded ? p.rentPaid : p.waterPaid;
+
   const payStatus = (p) => {
-    if (p.rentPaid && p.cleaningPaid && p.waterPaid) return "paid";
-    if (!p.rentPaid && !p.cleaningPaid && !p.waterPaid) return "unpaid";
+    const parts = [p.rentPaid, cleaningOk(p), waterOk(p)];
+    if (parts.every(Boolean)) return "paid";
+    if (parts.every((v) => !v)) return "unpaid";
     return "partial";
   };
 
@@ -200,7 +207,15 @@ function Payments() {
                       >
                         {p.rentPaid ? <Check size={12} weight="bold" /> : ""}
                       </button>
-                      <span className="check-label"><House size={14} weight="regular" /> Rent</span>
+                      <span className="check-label">
+                        <House size={14} weight="regular" />
+                        {" Rent"}
+                        {(p.cleaningIncluded || p.waterIncluded) && (
+                          <em style={{ color: "var(--text-muted)", fontStyle: "normal", fontSize: 11 }}>
+                            {" "}(incl. {[p.cleaningIncluded && "cleaning", p.waterIncluded && "water"].filter(Boolean).join(" & ")})
+                          </em>
+                        )}
+                      </span>
                     </div>
                     <span style={{
                       fontFamily: "var(--font-display)",
@@ -212,52 +227,61 @@ function Payments() {
                     </span>
                   </div>
 
-                  {/* Cleaning */}
-                  <div className="check-item">
-                    <div className="check-left">
-                      <button
-                        className={`check-toggle ${p.cleaningPaid ? "checked" : ""}`}
-                        onClick={() => toggle(p, "cleaningPaid")}
-                        title="Toggle Cleaning Paid"
-                        aria-label="Toggle cleaning paid"
-                      >
-                        {p.cleaningPaid ? <Check size={12} weight="bold" /> : ""}
-                      </button>
-                      <span className="check-label"><Broom size={14} weight="regular" /> Cleanliness</span>
+                  {/* Cleaning — only billed separately if not folded into rent */}
+                  {!p.cleaningIncluded && (
+                    <div className="check-item">
+                      <div className="check-left">
+                        <button
+                          className={`check-toggle ${p.cleaningPaid ? "checked" : ""}`}
+                          onClick={() => toggle(p, "cleaningPaid")}
+                          title="Toggle Cleaning Paid"
+                          aria-label="Toggle cleaning paid"
+                        >
+                          {p.cleaningPaid ? <Check size={12} weight="bold" /> : ""}
+                        </button>
+                        <span className="check-label"><Broom size={14} weight="regular" /> Cleanliness</span>
+                      </div>
+                      <span className="badge" style={{
+                        background: p.cleaningPaid ? "var(--green-dim)" : "var(--red-dim)",
+                        color: p.cleaningPaid ? "var(--green)" : "var(--red)",
+                      }}>
+                        {p.cleaningPaid ? "Paid" : "Unpaid"}
+                      </span>
                     </div>
-                    <span className="badge" style={{
-                      background: p.cleaningPaid ? "var(--green-dim)" : "var(--red-dim)",
-                      color: p.cleaningPaid ? "var(--green)" : "var(--red)",
-                    }}>
-                      {p.cleaningPaid ? "Paid" : "Unpaid"}
-                    </span>
-                  </div>
+                  )}
 
-                  {/* Water */}
-                  <div className="check-item">
-                    <div className="check-left">
-                      <button
-                        className={`check-toggle ${p.waterPaid ? "checked" : ""}`}
-                        onClick={() => toggle(p, "waterPaid")}
-                        title="Toggle Water Paid"
-                        aria-label="Toggle water paid"
-                      >
-                        {p.waterPaid ? <Check size={12} weight="bold" /> : ""}
-                      </button>
-                      <span className="check-label"><Drop size={14} weight="regular" /> Dirty Water Collection</span>
+                  {/* Water — only billed separately if not folded into rent */}
+                  {!p.waterIncluded && (
+                    <div className="check-item">
+                      <div className="check-left">
+                        <button
+                          className={`check-toggle ${p.waterPaid ? "checked" : ""}`}
+                          onClick={() => toggle(p, "waterPaid")}
+                          title="Toggle Water Paid"
+                          aria-label="Toggle water paid"
+                        >
+                          {p.waterPaid ? <Check size={12} weight="bold" /> : ""}
+                        </button>
+                        <span className="check-label"><Drop size={14} weight="regular" /> Dirty Water Collection</span>
+                      </div>
+                      <span className="badge" style={{
+                        background: p.waterPaid ? "var(--green-dim)" : "var(--red-dim)",
+                        color: p.waterPaid ? "var(--green)" : "var(--red)",
+                      }}>
+                        {p.waterPaid ? "Paid" : "Unpaid"}
+                      </span>
                     </div>
-                    <span className="badge" style={{
-                      background: p.waterPaid ? "var(--green-dim)" : "var(--red-dim)",
-                      color: p.waterPaid ? "var(--green)" : "var(--red)",
-                    }}>
-                      {p.waterPaid ? "Paid" : "Unpaid"}
-                    </span>
-                  </div>
+                  )}
                 </div>
 
                 <div className="payment-card-footer">
-                  <span className="total-label">Monthly Rent</span>
-                  <span className="total-value">{Number(p.rent || 0).toLocaleString()} TZS</span>
+                  <div className="footer-total">
+                    <span className="total-label">Monthly Rent</span>
+                    <span className="total-value">{Number(p.rent || 0).toLocaleString()} TZS</span>
+                  </div>
+                  <button className="btn btn-ghost invoice-btn" onClick={() => setInvoiceProperty(p)}>
+                    <Receipt size={14} /> Invoice
+                  </button>
                 </div>
               </div>
             );
@@ -273,6 +297,14 @@ function Payments() {
           type={paymentModal.type}
           onClose={() => setPaymentModal(null)}
           onRecorded={handleRecorded}
+        />
+      )}
+
+      {invoiceProperty && (
+        <InvoiceModal
+          company={company}
+          property={invoiceProperty}
+          onClose={() => setInvoiceProperty(null)}
         />
       )}
     </div>

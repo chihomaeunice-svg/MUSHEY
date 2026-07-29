@@ -4,11 +4,12 @@ import {
   doc, addDoc, updateDoc, collection, getDocs, deleteDoc,
 } from "firebase/firestore";
 import {
-  MagnifyingGlass, Plus, House, MapTrifold, PencilSimple, Trash, X, Buildings,
+  MagnifyingGlass, Plus, House, MapTrifold, PencilSimple, Trash, X, Buildings, UploadSimple,
 } from "@phosphor-icons/react";
 import { db } from "../firebase/firebaseConfig";
 import { useCompany } from "../components/CompanyProvider";
 import PhotoUpload from "../components/PhotoUpload";
+import ImportPropertiesModal from "../components/ImportPropertiesModal";
 import "../styles/properties.css";
 
 const PROPERTY_TYPES = ["House", "Shop", "Warehouse", "Yard", "Open Space"];
@@ -18,15 +19,18 @@ const emptyForm = {
   area: "", type: "", propertyName: "", status: "occupied", tenantName: "",
   rent: "", contractStart: "", contractEnd: "", phone: "", notes: "",
   idType: "", idNumber: "", idPhotoUrl: "",
+  cleaningIncluded: false, cleaningFee: "",
+  waterIncluded: false, waterFee: "",
 };
 
 function Properties({ setCurrentPage }) {
-  const { membership, company } = useCompany();
+  const { membership, company, refreshCompany } = useCompany();
   const areas = company?.areas || [];
 
   const [properties, setProperties] = useState([]);
   const [loading, setLoading]       = useState(true);
   const [showModal, setShowModal]   = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [editMode, setEditMode]     = useState(false);
   const [editId, setEditId]         = useState(null);
   const [form, setForm]             = useState(emptyForm);
@@ -75,6 +79,8 @@ function Properties({ setCurrentPage }) {
       contractStart: p.contractStart, contractEnd: p.contractEnd,
       phone: p.phone || "", notes: p.notes || "",
       idType: p.idType || "", idNumber: p.idNumber || "", idPhotoUrl: p.idPhotoUrl || "",
+      cleaningIncluded: !!p.cleaningIncluded, cleaningFee: p.cleaningFee || "",
+      waterIncluded: !!p.waterIncluded, waterFee: p.waterFee || "",
     });
     setEditMode(true);
     setEditId(p.id);
@@ -106,6 +112,10 @@ function Properties({ setCurrentPage }) {
         idType: form.idType,
         idNumber: form.idNumber,
         idPhotoUrl: form.idPhotoUrl,
+        cleaningIncluded: form.cleaningIncluded,
+        cleaningFee: form.cleaningIncluded ? "" : form.cleaningFee,
+        waterIncluded: form.waterIncluded,
+        waterFee: form.waterIncluded ? "" : form.waterFee,
       };
 
       if (editMode) {
@@ -176,10 +186,24 @@ function Properties({ setCurrentPage }) {
         <div className="empty-state">
           <div className="icon"><MapTrifold size={40} weight="thin" /></div>
           <p>You haven't added any areas yet — properties are organized by area.</p>
-          <button className="btn btn-primary" style={{ marginTop: 14 }} onClick={() => setCurrentPage?.("settings")}>
-            Add Your Areas in Settings
-          </button>
+          <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+            <button className="btn btn-primary" onClick={() => setCurrentPage?.("settings")}>
+              Add Your Areas in Settings
+            </button>
+            <button className="btn btn-ghost" onClick={() => setShowImport(true)}>
+              <UploadSimple size={15} /> Import from CSV instead
+            </button>
+          </div>
         </div>
+        {showImport && (
+          <ImportPropertiesModal
+            companyId={membership.companyId}
+            existingAreas={areas}
+            refreshCompany={refreshCompany}
+            onClose={() => setShowImport(false)}
+            onImported={loadProperties}
+          />
+        )}
       </div>
     );
   }
@@ -222,9 +246,14 @@ function Properties({ setCurrentPage }) {
             <option value="vacant">Vacant Only</option>
           </select>
         </div>
-        <button className="btn btn-primary" onClick={openAdd}>
-          <Plus size={15} weight="bold" /> Add Property
-        </button>
+        <div className="toolbar-right">
+          <button className="btn btn-ghost" onClick={() => setShowImport(true)}>
+            <UploadSimple size={15} /> Import from CSV
+          </button>
+          <button className="btn btn-primary" onClick={openAdd}>
+            <Plus size={15} weight="bold" /> Add Property
+          </button>
+        </div>
       </div>
 
       {/* Table */}
@@ -434,6 +463,45 @@ function Properties({ setCurrentPage }) {
                 />
               </div>
 
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="fee-included-check">
+                    <input
+                      type="checkbox"
+                      checked={form.cleaningIncluded}
+                      onChange={(e) => set("cleaningIncluded", e.target.checked)}
+                    />
+                    Cleaning fee included in rent
+                  </label>
+                  {!form.cleaningIncluded && (
+                    <input
+                      type="number"
+                      placeholder="Cleaning fee (TZS/month)"
+                      value={form.cleaningFee}
+                      onChange={(e) => set("cleaningFee", e.target.value)}
+                    />
+                  )}
+                </div>
+                <div className="form-group">
+                  <label className="fee-included-check">
+                    <input
+                      type="checkbox"
+                      checked={form.waterIncluded}
+                      onChange={(e) => set("waterIncluded", e.target.checked)}
+                    />
+                    Water fee included in rent
+                  </label>
+                  {!form.waterIncluded && (
+                    <input
+                      type="number"
+                      placeholder="Water fee (TZS/month)"
+                      value={form.waterFee}
+                      onChange={(e) => set("waterFee", e.target.value)}
+                    />
+                  )}
+                </div>
+              </div>
+
               <div className="form-group">
                 <label>Notes</label>
                 <input
@@ -451,6 +519,16 @@ function Properties({ setCurrentPage }) {
             </div>
           </div>
         </div>
+      )}
+
+      {showImport && (
+        <ImportPropertiesModal
+          companyId={membership.companyId}
+          existingAreas={areas}
+          refreshCompany={refreshCompany}
+          onClose={() => setShowImport(false)}
+          onImported={loadProperties}
+        />
       )}
     </div>
   );

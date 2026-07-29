@@ -13,7 +13,8 @@ import "../styles/recordPaymentModal.css";
 const TYPE_LABELS = { rent: "Rent", cleaning: "Cleanliness Fee", water: "Dirty Water Collection" };
 
 export default function RecordPaymentModal({ companyId, company, property, type, onClose, onRecorded }) {
-  const [amount, setAmount] = useState(type === "rent" ? property.rent || "" : "");
+  const DEFAULT_AMOUNT = { rent: property.rent, cleaning: property.cleaningFee, water: property.waterFee };
+  const [amount, setAmount] = useState(DEFAULT_AMOUNT[type] || "");
   const [receiptPhotoUrl, setReceiptPhotoUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");

@@ -54,14 +54,37 @@ export function CompanyProvider({ children }) {
     return () => { cancelled = true; };
   }, [user]);
 
+  // Manual refetch for consumers that write to companies/{companyId} and need
+  // the shared `company` object to reflect it immediately (e.g. Settings
+  // saving new areas) — same shape as `load` above, minus the sign-up-race
+  // retry loop, which only matters for the very first load.
+  const refreshCompany = async () => {
+    if (!user) return;
+    setState((s) => ({ ...s, loading: true }));
+    try {
+      const membership = await getUserRecord(user.uid);
+      if (!membership) {
+        setState({ loading: false, membership: null, company: null, error: "no-membership" });
+        return;
+      }
+      const company = membership.role === "superAdmin"
+        ? null
+        : await getCompany(membership.companyId);
+      setState({ loading: false, membership, company, error: null });
+    } catch (e) {
+      console.error("CompanyProvider refresh error:", e);
+      setState({ loading: false, membership: null, company: null, error: e.message });
+    }
+  };
+
   return (
-    <CompanyContext.Provider value={state}>
+    <CompanyContext.Provider value={{ ...state, refreshCompany }}>
       {children}
     </CompanyContext.Provider>
   );
 }
 
-/** { loading, membership: {companyId, role, name, email}, company, error } */
+/** { loading, membership: {companyId, role, name, email}, company, error, refreshCompany } */
 export function useCompany() {
   return useContext(CompanyContext);
 }

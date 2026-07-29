@@ -16,6 +16,12 @@
   flex-wrap: wrap;
 }
 
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .search-input-wrap {
   position: relative;
 }
@@ -211,4 +217,72 @@
   font-family: var(--font-display);
   font-weight: 700;
   color: var(--accent);
+}
+
+.fee-included-check {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  letter-spacing: normal !important;
+  color: var(--text) !important;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+.fee-included-check input[type="checkbox"] {
+  width: auto;
+}
+
+/* Import from CSV modal */
+.import-modal {
+  max-width: 680px;
+}
+
+.import-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+
+.import-file-label {
+  cursor: pointer;
+}
+
+.import-error-banner {
+  color: var(--red);
+  background: var(--red-dim);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+.import-summary {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.import-table-wrap {
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+}
+
+.import-table-wrap table {
+  width: 100%;
+}
+
+.import-table-wrap th, .import-table-wrap td {
+  padding: 8px 12px;
+  font-size: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
 }

@@ -10,7 +10,7 @@ import { useCompany } from "../components/CompanyProvider";
 import "../styles/settings.css";
 
 function Settings() {
-  const { membership, company } = useCompany();
+  const { membership, company, refreshCompany } = useCompany();
   const [form, setForm] = useState({
     name: company?.name || "",
     tin: company?.tin || "",
@@ -60,6 +60,7 @@ function Settings() {
         receiptPrefix: form.receiptPrefix,
         areas,
       });
+      await refreshCompany();
       setSaved(true);
     } catch (e) {
       alert("Error saving: " + e.message);
