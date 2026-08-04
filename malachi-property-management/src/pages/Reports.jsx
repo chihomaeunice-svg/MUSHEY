@@ -16,6 +16,7 @@ import {
   fmtTZS,
 } from "../utils/Revenuecalc";
 import { useCountUp } from "../utils/useCountUp";
+import { isRentCurrent, monthlyEquivalent } from "../utils/billing";
 import "../styles/reports.css";
 
 const COLORS = [
@@ -54,22 +55,22 @@ function Reports() {
         const props = allList.filter((p) => p.area === area);
         if (props.length === 0) continue;
 
-        // Total contract value = rent × whole months in contract
+        // Total contract value = monthly-equivalent rent × whole months in contract
         const totalContractValue = props.reduce((s, p) =>
-          s + contractTotalRevenue(p.rent, p.contractStart, p.contractEnd), 0);
+          s + contractTotalRevenue(monthlyEquivalent(p), p.contractStart, p.contractEnd), 0);
 
-        // Cash actually collected = sum of rent for properties marked rentPaid
+        // Cash actually collected = sum of rent for properties currently paid
         const cashCollected = props
-          .filter((p) => p.rentPaid)
+          .filter((p) => isRentCurrent(p))
           .reduce((s, p) => s + Number(p.rent || 0), 0);
 
         // Outstanding = monthly base - collected this month
-        const monthlyBase = props.reduce((s, p) => s + Number(p.rent || 0), 0);
+        const monthlyBase = props.reduce((s, p) => s + monthlyEquivalent(p), 0);
         const outstanding = props
-          .filter((p) => !p.rentPaid)
+          .filter((p) => !isRentCurrent(p))
           .reduce((s, p) => s + Number(p.rent || 0), 0);
 
-        const paidCount = props.filter((p) => p.rentPaid).length;
+        const paidCount = props.filter((p) => isRentCurrent(p)).length;
 
         results.push({
           area,
@@ -95,10 +96,10 @@ function Reports() {
 
   // Forward-looking period revenue (whole months only)
   const periodRevenue    = allProps.reduce((s, p) =>
-    s + revenueForPeriod(p.rent, p.contractStart, p.contractEnd, period), 0);
+    s + revenueForPeriod(monthlyEquivalent(p), p.contractStart, p.contractEnd, period), 0);
   const currentYear      = new Date().getFullYear();
   const yearRevenue      = allProps.reduce((s, p) =>
-    s + revenueForYear(p.rent, p.contractStart, p.contractEnd, currentYear), 0);
+    s + revenueForYear(monthlyEquivalent(p), p.contractStart, p.contractEnd, currentYear), 0);
   const totalCollected   = areaReports.reduce((s, r) => s + r.cashCollected, 0);
   const totalOutstanding = areaReports.reduce((s, r) => s + r.outstanding, 0);
   const totalMonthly     = areaReports.reduce((s, r) => s + r.monthlyBase, 0);
@@ -204,7 +205,7 @@ function Reports() {
         ) : (
           areaReports.map((r, i) => {
             const fwdRevenue = r.props.reduce((s, p) =>
-              s + revenueForPeriod(p.rent, p.contractStart, p.contractEnd, period), 0);
+              s + revenueForPeriod(monthlyEquivalent(p), p.contractStart, p.contractEnd, period), 0);
             return (
               <div className="breakdown-row stagger-in" key={r.area} style={{ "--stagger-i": i }}>
                 <div className="area-name-cell">
@@ -275,7 +276,7 @@ function Reports() {
           {areaReports.flatMap((r) =>
             r.props.map((p) => {
               const months     = contractMonths(p.contractStart, p.contractEnd);
-              const totalValue = contractTotalRevenue(p.rent, p.contractStart, p.contractEnd);
+              const totalValue = contractTotalRevenue(monthlyEquivalent(p), p.contractStart, p.contractEnd);
               const days       = daysUntilExpiry(p.contractEnd);
               const status     = contractStatus(p.contractEnd);
 
@@ -297,7 +298,7 @@ function Reports() {
                   </div>
                   <span style={{ fontSize:12, color:"var(--text-sub)" }}>{r.area}</span>
                   <span style={{ fontFamily:"var(--font-display)", fontWeight:700, color:"var(--accent)" }}>
-                    {Number(p.rent || 0).toLocaleString()}
+                    {Number(monthlyEquivalent(p)).toLocaleString()}
                   </span>
                   <div style={{ fontSize:11, color:"var(--text-muted)", lineHeight:1.6 }}>
                     <div>{p.contractStart || "—"}</div>

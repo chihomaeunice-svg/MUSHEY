@@ -22,6 +22,10 @@ export default function RecordPaymentModal({ companyId, company, property, type,
   const requirePhoto = !!company?.requireReceiptUpload;
 
   const handleConfirm = async () => {
+    if (!amount || Number(amount) <= 0) {
+      setError("Enter the actual amount paid — it must be greater than 0.");
+      return;
+    }
     if (requirePhoto && !receiptPhotoUrl) {
       setError("This company requires a receipt photo before confirming payment.");
       return;

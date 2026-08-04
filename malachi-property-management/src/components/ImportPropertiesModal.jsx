@@ -8,15 +8,16 @@ import { collection, doc, updateDoc, writeBatch } from "firebase/firestore";
 import { X, UploadSimple, DownloadSimple } from "@phosphor-icons/react";
 import { db } from "../firebase/firebaseConfig";
 import { parseCsv, downloadCsv } from "../utils/csv";
+import { FREQUENCIES } from "../utils/billing";
 
 const TEMPLATE_HEADERS = [
   "Area", "Type", "Property Name", "Status", "Tenant Name", "Phone",
-  "Rent", "Contract Start", "Contract End", "ID Type", "ID Number", "Notes",
+  "Rent", "Rent Frequency", "Contract Start", "Contract End", "ID Type", "ID Number", "Notes",
 ];
 
 const TEMPLATE_EXAMPLE = [
   "Kinondoni", "House", "House 12", "occupied", "Amina Juma", "0712345678",
-  "250000", "2026-01-01", "2026-12-31", "National ID", "1990-1-2-345678", "",
+  "250000", "monthly", "2026-01-01", "2026-12-31", "National ID", "1990-1-2-345678", "",
 ];
 
 const FIELD_BY_HEADER = {
@@ -35,6 +36,9 @@ const FIELD_BY_HEADER = {
   phonenumber: "phone",
   rent: "rent",
   monthlyrent: "rent",
+  rentfrequency: "rentFrequency",
+  frequency: "rentFrequency",
+  collected: "rentFrequency",
   contractstart: "contractStart",
   contractend: "contractEnd",
   idtype: "idType",
@@ -70,6 +74,22 @@ function parseRows(text) {
     if (!raw.propertyName) errors.push("missing Property Name");
     const status = (raw.status || "occupied").toLowerCase() === "vacant" ? "vacant" : "occupied";
     if (status === "occupied" && !raw.tenantName) errors.push("missing Tenant Name (or set Status to vacant)");
+    if (!raw.rent) errors.push("missing Rent");
+    else if (Number(raw.rent) <= 0) errors.push("Rent must be greater than 0");
+
+    // Left blank, this column is simply not part of the row — for an update
+    // that means "leave whatever frequency the property already has alone"
+    // rather than silently resetting it to monthly.
+    const freqRaw = raw.rentFrequency ? raw.rentFrequency.toLowerCase().replace(/[^a-z0-9]/g, "") : "";
+    const freqMatch = !freqRaw ? undefined : (
+      Object.keys(FREQUENCIES).find((k) => k === freqRaw)
+      || (freqRaw.startsWith("quarter") ? "quarterly"
+        : freqRaw.startsWith("month") ? "monthly"
+        : freqRaw.startsWith("annual") || freqRaw.startsWith("year") ? "annual"
+        : freqRaw.includes("6") || freqRaw.startsWith("semi") || freqRaw.startsWith("bian") ? "semiannual"
+        : null)
+    );
+    if (raw.rentFrequency && !freqMatch) errors.push(`unrecognized Rent Frequency "${raw.rentFrequency}"`);
 
     return {
       line: i + 2,
@@ -82,6 +102,7 @@ function parseRows(text) {
         status,
         tenantName: status === "vacant" ? "" : (raw.tenantName || ""),
         rent: raw.rent || "",
+        rentFrequency: freqMatch, // undefined when not in the CSV — see handleImport
         contractStart: status === "vacant" ? "" : (raw.contractStart || ""),
         contractEnd: status === "vacant" ? "" : (raw.contractEnd || ""),
         phone: status === "vacant" ? "" : (raw.phone || ""),
@@ -148,10 +169,15 @@ export default function ImportPropertiesModal({ companyId, existingAreas, existi
           if (row.existingId) {
             // Update in place — leaves rentPaid/cleaningPaid/waterPaid/idVerified
             // untouched, since the CSV doesn't represent this month's paid state.
-            batch.update(doc(propertiesCol, row.existingId), row.data);
+            // rentFrequency only gets touched if the CSV actually specified it,
+            // so an unrelated correction doesn't quietly reset it to monthly.
+            const updateData = { ...row.data };
+            if (updateData.rentFrequency === undefined) delete updateData.rentFrequency;
+            batch.update(doc(propertiesCol, row.existingId), updateData);
           } else {
             batch.set(doc(propertiesCol), {
               ...row.data,
+              rentFrequency: row.data.rentFrequency || "monthly",
               rentPaid: false,
               cleaningPaid: false,
               waterPaid: false,
@@ -202,10 +228,12 @@ export default function ImportPropertiesModal({ companyId, existingAreas, existi
               <p className="settings-card-sub">
                 Upload a CSV with one row per property. Each landlord's spreadsheet can use any
                 of these column names (any order): Area, Type, Property Name, Status
-                (occupied/vacant), Tenant Name, Phone, Rent, Contract Start, Contract End, ID Type,
-                ID Number, Notes. Only Area and Property Name are required. A row whose Area +
-                Property Name matches an existing property updates it in place instead of creating
-                a duplicate — paid/verified status is left untouched either way.
+                (occupied/vacant), Tenant Name, Phone, Rent, Rent Frequency
+                (monthly/quarterly/semiannual/annual — defaults to monthly), Contract Start,
+                Contract End, ID Type, ID Number, Notes. Area, Property Name, and Rent are
+                required. A row whose Area + Property Name matches an existing property updates
+                it in place instead of creating a duplicate — paid/verified status is left
+                untouched either way.
               </p>
 
               <div className="import-actions-row">
