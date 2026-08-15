@@ -5,11 +5,24 @@
 // and how many tenants each is managing — for billing and maintenance follow-ups.
 
 import { useEffect, useState } from "react";
-import { SignOut, Buildings, CheckCircle, Users } from "@phosphor-icons/react";
+import {
+  collectionGroup, query, where, orderBy, getDocs, doc, updateDoc, serverTimestamp,
+} from "firebase/firestore";
+import { SignOut, Buildings, CheckCircle, Users, Receipt, Check, X as XIcon } from "@phosphor-icons/react";
 import { logout } from "../firebase/company";
 import { listAllCompanies, countCompanyProperties } from "../firebase/company";
+import { db } from "../firebase/firebaseConfig";
+import { auth } from "../firebase/auth";
+import { addMonths, FREQUENCIES } from "../utils/billing";
 import BrandMark from "../components/BrandMark";
 import "../styles/superadmin.css";
+
+function extendedPeriodEnd(company) {
+  const months = FREQUENCIES[company?.subscriptionFrequency] || 1;
+  const today = new Date().toISOString().slice(0, 10);
+  const base = company?.currentPeriodEnd && company.currentPeriodEnd > today ? company.currentPeriodEnd : today;
+  return addMonths(base, months);
+}
 
 function fmtDate(ts) {
   if (!ts) return "—";
@@ -21,8 +34,11 @@ function SuperAdmin() {
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading]     = useState(true);
   const [search, setSearch]       = useState("");
+  const [pendingProofs, setPendingProofs] = useState([]);
+  const [loadingProofs, setLoadingProofs] = useState(true);
+  const [reviewing, setReviewing] = useState(null); // paymentId currently being approved/rejected
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); loadPendingProofs(); }, []);
 
   const load = async () => {
     setLoading(true);
@@ -36,6 +52,51 @@ function SuperAdmin() {
       console.error(e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadPendingProofs = async () => {
+    setLoadingProofs(true);
+    try {
+      const snap = await getDocs(
+        query(collectionGroup(db, "subscriptionPayments"), where("status", "==", "pending"), orderBy("createdAt", "asc"))
+      );
+      setPendingProofs(snap.docs.map((d) => ({
+        id: d.id,
+        companyId: d.ref.parent.parent.id,
+        ...d.data(),
+      })));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingProofs(false);
+    }
+  };
+
+  const review = async (proof, decision) => {
+    setReviewing(proof.id);
+    try {
+      const paymentRef = doc(db, "companies", proof.companyId, "subscriptionPayments", proof.id);
+      await updateDoc(paymentRef, {
+        status: decision,
+        reviewedAt: serverTimestamp(),
+        reviewedBy: auth.currentUser?.uid || null,
+      });
+
+      if (decision === "approved") {
+        const company = companies.find((c) => c.id === proof.companyId);
+        await updateDoc(doc(db, "companies", proof.companyId), {
+          subscriptionStatus: "active",
+          currentPeriodEnd: extendedPeriodEnd(company),
+        });
+      }
+
+      setPendingProofs((prev) => prev.filter((p) => p.id !== proof.id));
+      load();
+    } catch (e) {
+      alert("Failed to update: " + e.message);
+    } finally {
+      setReviewing(null);
     }
   };
 
@@ -79,6 +140,71 @@ function SuperAdmin() {
           <div className="stat-label">Total Tenants Managed</div>
           <div className="stat-value">{totalTenants}</div>
           <div className="stat-sub">Across every company</div>
+        </div>
+      </div>
+
+      <div className="properties-table-wrap" style={{ marginBottom: 24 }}>
+        <div className="table-header-bar">
+          <h2><Receipt size={16} weight="regular" style={{ verticalAlign: "-2px" }} /> Pending Payment Proofs</h2>
+          {pendingProofs.length > 0 && <span className="count-tag">{pendingProofs.length} awaiting review</span>}
+        </div>
+        <div className="table-scroll">
+          {loadingProofs ? (
+            <div className="empty-state"><p>Loading…</p></div>
+          ) : pendingProofs.length === 0 ? (
+            <div className="empty-state"><p>Nothing pending — all caught up.</p></div>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Company</th>
+                  <th>Amount</th>
+                  <th>Note</th>
+                  <th>Submitted</th>
+                  <th>Proof</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingProofs.map((p) => {
+                  const company = companies.find((c) => c.id === p.companyId);
+                  return (
+                    <tr key={p.id}>
+                      <td>{company?.name || p.companyId}</td>
+                      <td>{Number(p.amount || 0).toLocaleString()} TZS</td>
+                      <td style={{ maxWidth: 200 }}>{p.note || "—"}</td>
+                      <td>{fmtDate(p.createdAt)}</td>
+                      <td>
+                        {p.proofPhotoUrl
+                          ? <a href={p.proofPhotoUrl} target="_blank" rel="noreferrer">View</a>
+                          : "—"}
+                      </td>
+                      <td>
+                        <div className="row-actions">
+                          <button
+                            className="action-btn"
+                            title="Approve"
+                            disabled={reviewing === p.id}
+                            onClick={() => review(p, "approved")}
+                          >
+                            <Check size={15} />
+                          </button>
+                          <button
+                            className="action-btn delete"
+                            title="Reject"
+                            disabled={reviewing === p.id}
+                            onClick={() => review(p, "rejected")}
+                          >
+                            <XIcon size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 

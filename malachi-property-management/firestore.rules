@@ -39,14 +39,33 @@ service cloud.firestore {
       allow create: if signedIn() && request.auth.uid == companyId
                     && request.resource.data.ownerUid == request.auth.uid;
 
-      // Subscription/billing fields are only ever written by Cloud Functions
-      // (Admin SDK, which bypasses these rules) — a company member can edit
-      // their other settings but never grant themselves an active/paid state.
+      // Billing fields: a company member can edit their own settings but
+      // never grant themselves an active/paid state. Only a superAdmin can
+      // touch these — and only these, via reviewing a submitted payment
+      // proof (see subscriptionPayments below) — never ownerUid.
       allow update: if isMember(companyId)
                     && !request.resource.data.diff(resource.data).affectedKeys()
-                         .hasAny(['subscriptionStatus', 'subscriptionAmount', 'currentPeriodEnd',
-                                  'paymentProvider', 'lastPaymentAt', 'ownerUid']);
+                         .hasAny(['subscriptionStatus', 'subscriptionAmount', 'subscriptionFrequency',
+                                  'currentPeriodEnd', 'paymentProvider', 'lastPaymentAt', 'ownerUid']);
+      allow update: if isSuperAdmin()
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['subscriptionStatus', 'subscriptionAmount', 'subscriptionFrequency',
+                                   'currentPeriodEnd', 'paymentProvider', 'lastPaymentAt']);
       allow delete: if false;
+
+      // Proof-of-payment submissions: a member can submit their own (as
+      // "pending") and read the history, but can't edit or delete a record
+      // once created — it's an audit trail. Only a superAdmin can move a
+      // submission to approved/rejected, and only that status (plus review
+      // metadata), never the claimed amount or photo.
+      match /subscriptionPayments/{paymentId} {
+        allow create: if isMember(companyId) && request.resource.data.status == 'pending';
+        allow read: if isMember(companyId) || isSuperAdmin();
+        allow update: if isSuperAdmin()
+                      && request.resource.data.diff(resource.data).affectedKeys()
+                           .hasOnly(['status', 'reviewedAt', 'reviewedBy']);
+        allow delete: if false;
+      }
 
       match /{document=**} {
         allow read, write: if isMember(companyId);

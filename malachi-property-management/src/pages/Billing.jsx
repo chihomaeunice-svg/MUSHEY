@@ -1,12 +1,15 @@
 // pages/Billing.jsx
-// Subscription status + payment history for this company (35,000 TZS/month).
-// No payment gateway is wired up yet — payment is arranged directly with
-// Malachi and the subscription period is extended on the account manually.
+// Subscription status + payment history for this company. There's no fixed
+// price — the rate is agreed per company. No payment gateway is wired up —
+// payment is arranged directly with Malachi, the company submits proof here,
+// and a superAdmin reviews it and updates the account.
 
 import { useEffect, useState } from "react";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
 import { useCompany } from "../components/CompanyProvider";
+import SubmitPaymentProofModal from "../components/SubmitPaymentProofModal";
+import { FREQUENCY_SUFFIX } from "../utils/billing";
 import "../styles/billing.css";
 
 const STATUS_LABELS = {
@@ -25,6 +28,7 @@ function Billing() {
   const { membership, company } = useCompany();
   const [history, setHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const [showProofModal, setShowProofModal] = useState(false);
 
   useEffect(() => { loadHistory(); }, [membership?.companyId]);
 
@@ -68,7 +72,11 @@ function Billing() {
 
           <div className="billing-status-row">
             <span className={`badge ${status.className}`}>{status.label}</span>
-            <span className="billing-amount">{Number(company.subscriptionAmount || 35000).toLocaleString()} TZS / month</span>
+            <span className="billing-amount">
+              {company.subscriptionAmount
+                ? `${Number(company.subscriptionAmount).toLocaleString()} TZS ${FREQUENCY_SUFFIX[company.subscriptionFrequency] || "per month"}`
+                : "Rate not yet set — contact Malachi"}
+            </span>
           </div>
 
           <div className="billing-period">
@@ -85,6 +93,10 @@ function Billing() {
             To pay, renew, or upgrade your subscription, contact Malachi directly —
             your account will be updated once payment is confirmed.
           </p>
+
+          <button className="btn btn-primary" style={{ marginTop: 14 }} onClick={() => setShowProofModal(true)}>
+            Submit Proof of Payment
+          </button>
         </div>
 
         <div className="card">
@@ -98,8 +110,8 @@ function Billing() {
             <div className="billing-history">
               {history.map((h) => (
                 <div className="billing-history-row" key={h.id}>
-                  <span className={`badge ${h.status === "paid" ? "paid" : h.status === "failed" ? "unpaid" : "expiring"}`}>
-                    {h.status}
+                  <span className={`badge ${h.status === "approved" ? "paid" : h.status === "rejected" ? "unpaid" : "expiring"}`}>
+                    {h.status === "pending" ? "Pending Review" : h.status}
                   </span>
                   <span>{Number(h.amount || 0).toLocaleString()} TZS</span>
                   <span className="billing-history-ref">{h.id}</span>
@@ -109,6 +121,14 @@ function Billing() {
           )}
         </div>
       </div>
+
+      {showProofModal && (
+        <SubmitPaymentProofModal
+          companyId={membership.companyId}
+          onClose={() => setShowProofModal(false)}
+          onSubmitted={() => { setShowProofModal(false); loadHistory(); }}
+        />
+      )}
     </div>
   );
 }
