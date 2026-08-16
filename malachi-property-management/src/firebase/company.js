@@ -41,16 +41,15 @@ export async function registerCompany({ companyName, tin, phone, ownerName, emai
     active: true,
     plan: "trial",
     areas: [],
-    requireReceiptUpload: false,
     receiptPrefix: (companyName || "MAL").slice(0, 3).toUpperCase(),
     nextReceiptNumber: 1,
     // Subscription billing (companies/{companyId}) — these fields are only
-    // ever changed server-side (Cloud Functions) after this initial write;
-    // firestore.rules blocks clients from touching them afterward. No
-    // payment gateway is wired up yet: payment is arranged directly with
-    // Malachi and currentPeriodEnd is extended on the account manually.
+    // ever changed by a superAdmin (see firestore.rules) after this initial
+    // write. There's no fixed price — the rate is agreed with each company
+    // individually and set by a superAdmin once the trial converts.
     subscriptionStatus: "trialing",
-    subscriptionAmount: 35000,
+    subscriptionAmount: null,
+    subscriptionFrequency: "monthly",
     currentPeriodEnd: trialEnd.toISOString().slice(0, 10),
   };
 

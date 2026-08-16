@@ -9,10 +9,16 @@ import { db } from "../firebase/firebaseConfig";
 import { useCompany } from "../components/CompanyProvider";
 import RecordPaymentModal from "../components/RecordPaymentModal";
 import InvoiceModal from "../components/InvoiceModal";
+import PaymentHistoryPanel from "../components/PaymentHistoryPanel";
 import { useCountUp } from "../utils/useCountUp";
+import { isRentCurrent, nextPaidThrough, FREQUENCY_LABELS } from "../utils/billing";
 import "../styles/payments.css";
 
 const FIELD_TYPE = { rentPaid: "rent", cleaningPaid: "cleaning", waterPaid: "water" };
+
+function formatDate(dateStr) {
+  return new Date(`${dateStr}T00:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
 
 function Payments() {
   const { membership, company } = useCompany();
@@ -25,6 +31,7 @@ function Payments() {
   const [paymentModal, setPaymentModal] = useState(null); // { property, field, type }
   const [invoiceProperty, setInvoiceProperty] = useState(null);
   const [mounted, setMounted] = useState(false);
+  const [view, setView] = useState("status"); // "status" | "history"
 
   useEffect(() => { loadProperties(); }, [membership?.companyId]);
 
@@ -48,32 +55,36 @@ function Payments() {
   };
 
   const toggle = async (p, field) => {
-    const newVal = !p[field];
+    const current = field === "rentPaid" ? isRentCurrent(p) : p[field];
 
     // Marking as paid opens the payment/receipt modal instead of writing directly.
-    if (newVal) {
+    if (!current) {
       setPaymentModal({ property: p, field, type: FIELD_TYPE[field] });
       return;
     }
 
     // Undo — no receipt needed to un-mark a mistaken entry.
-    await updateDoc(doc(db, "companies", membership.companyId, "properties", p.id), { [field]: false });
-    setProperties((prev) => prev.map((item) => item.id === p.id ? { ...item, [field]: false } : item));
+    const resetData = field === "rentPaid" ? { rentPaid: false, rentPaidThrough: null } : { [field]: false };
+    await updateDoc(doc(db, "companies", membership.companyId, "properties", p.id), resetData);
+    setProperties((prev) => prev.map((item) => item.id === p.id ? { ...item, ...resetData } : item));
   };
 
   const handleRecorded = async () => {
     const { property, field } = paymentModal;
-    await updateDoc(doc(db, "companies", membership.companyId, "properties", property.id), { [field]: true });
-    setProperties((prev) => prev.map((item) => item.id === property.id ? { ...item, [field]: true } : item));
+    const data = field === "rentPaid"
+      ? { rentPaidThrough: nextPaidThrough(property) }
+      : { [field]: true };
+    await updateDoc(doc(db, "companies", membership.companyId, "properties", property.id), data);
+    setProperties((prev) => prev.map((item) => item.id === property.id ? { ...item, ...data } : item));
     setPaymentModal(null);
   };
 
   // A fee that's included in rent is only ever as "paid" as the rent itself is.
-  const cleaningOk = (p) => p.cleaningIncluded ? p.rentPaid : p.cleaningPaid;
-  const waterOk = (p) => p.waterIncluded ? p.rentPaid : p.waterPaid;
+  const cleaningOk = (p) => p.cleaningIncluded ? isRentCurrent(p) : p.cleaningPaid;
+  const waterOk = (p) => p.waterIncluded ? isRentCurrent(p) : p.waterPaid;
 
   const payStatus = (p) => {
-    const parts = [p.rentPaid, cleaningOk(p), waterOk(p)];
+    const parts = [isRentCurrent(p), cleaningOk(p), waterOk(p)];
     if (parts.every(Boolean)) return "paid";
     if (parts.every((v) => !v)) return "unpaid";
     return "partial";
@@ -88,7 +99,7 @@ function Payments() {
 
   // Summary
   const totalRent  = filtered.reduce((s, p) => s + Number(p.rent || 0), 0);
-  const paidRent   = filtered.filter((p) => p.rentPaid).reduce((s, p) => s + Number(p.rent || 0), 0);
+  const paidRent   = filtered.filter((p) => isRentCurrent(p)).reduce((s, p) => s + Number(p.rent || 0), 0);
   const unpaidRent = totalRent - paidRent;
   const fullyPaid  = filtered.filter((p) => payStatus(p) === "paid").length;
   const unpaidCount = filtered.filter((p) => payStatus(p) === "unpaid").length;
@@ -104,6 +115,19 @@ function Payments() {
         <p>Track rent, cleaning, and water collection per tenant</p>
       </div>
 
+      <div className="payments-filters" style={{ marginBottom: 20 }}>
+        <button className={`filter-tab ${view === "status" ? "active" : ""}`} onClick={() => setView("status")}>
+          Current Status
+        </button>
+        <button className={`filter-tab ${view === "history" ? "active" : ""}`} onClick={() => setView("history")}>
+          Payment History
+        </button>
+      </div>
+
+      {view === "history" ? (
+        <PaymentHistoryPanel companyId={membership.companyId} />
+      ) : (
+        <>
       {/* Summary chips */}
       <div className="payments-summary">
         <div className="summary-chip stagger-in" style={{ "--stagger-i": 0 }}>
@@ -200,16 +224,21 @@ function Payments() {
                   <div className="check-item">
                     <div className="check-left">
                       <button
-                        className={`check-toggle ${p.rentPaid ? "checked" : ""}`}
+                        className={`check-toggle ${isRentCurrent(p) ? "checked" : ""}`}
                         onClick={() => toggle(p, "rentPaid")}
                         title="Toggle Rent Paid"
                         aria-label="Toggle rent paid"
                       >
-                        {p.rentPaid ? <Check size={12} weight="bold" /> : ""}
+                        {isRentCurrent(p) ? <Check size={12} weight="bold" /> : ""}
                       </button>
                       <span className="check-label">
                         <House size={14} weight="regular" />
                         {" Rent"}
+                        {p.rentFrequency && p.rentFrequency !== "monthly" && (
+                          <em style={{ color: "var(--text-muted)", fontStyle: "normal", fontSize: 11 }}>
+                            {" "}({FREQUENCY_LABELS[p.rentFrequency]?.split(" ")[0]})
+                          </em>
+                        )}
                         {(p.cleaningIncluded || p.waterIncluded) && (
                           <em style={{ color: "var(--text-muted)", fontStyle: "normal", fontSize: 11 }}>
                             {" "}(incl. {[p.cleaningIncluded && "cleaning", p.waterIncluded && "water"].filter(Boolean).join(" & ")})
@@ -217,14 +246,21 @@ function Payments() {
                         )}
                       </span>
                     </div>
-                    <span style={{
-                      fontFamily: "var(--font-display)",
-                      fontWeight: 700,
-                      fontSize: 13,
-                      color: p.rentPaid ? "var(--green)" : "var(--red)",
-                    }}>
-                      {Number(p.rent || 0).toLocaleString()} TZS
-                    </span>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{
+                        fontFamily: "var(--font-display)",
+                        fontWeight: 700,
+                        fontSize: 13,
+                        color: isRentCurrent(p) ? "var(--green)" : "var(--red)",
+                      }}>
+                        {Number(p.rent || 0).toLocaleString()} TZS
+                      </div>
+                      {p.rentPaidThrough && (
+                        <div style={{ fontSize: 10, color: "var(--text-muted)" }}>
+                          {isRentCurrent(p) ? "paid through " : "was due "}{formatDate(p.rentPaidThrough)}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Cleaning — only billed separately if not folded into rent */}
@@ -287,6 +323,8 @@ function Payments() {
             );
           })}
         </div>
+      )}
+        </>
       )}
 
       {paymentModal && (

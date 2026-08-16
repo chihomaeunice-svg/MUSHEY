@@ -8,6 +8,7 @@ import {
 import { db } from "../firebase/firebaseConfig";
 import { useCompany } from "../components/CompanyProvider";
 import { useCountUp } from "../utils/useCountUp";
+import { isRentCurrent, monthlyEquivalent } from "../utils/billing";
 import "../styles/dashboard.css";
 
 const AREA_COLORS = [
@@ -89,8 +90,8 @@ function Dashboard({ setCurrentPage }) {
         if (props.length === 0) continue;
 
         const occupied = props.filter((p) => p.status !== "vacant");
-        const areaRent = occupied.reduce((s, p) => s + (Number(p.rent) || 0), 0);
-        const areaPaid = occupied.filter((p) => p.rentPaid === true).length;
+        const areaRent = occupied.reduce((s, p) => s + monthlyEquivalent(p), 0);
+        const areaPaid = occupied.filter((p) => isRentCurrent(p)).length;
         const areaVacant = props.length - occupied.length;
 
         totalRent += areaRent;

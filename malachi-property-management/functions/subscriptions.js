@@ -1,11 +1,10 @@
 // functions/subscriptions.js
-// Subscription status tracking (35,000 TZS/month per company), managed
-// manually for now — no payment gateway is wired up. Payments are collected
-// outside the app and the period is extended by hand (Firestore or a future
-// super-admin action); this file only runs the daily lapse sweep so overdue
+// Subscription status tracking — rate is agreed per company, no fixed price.
+// No payment gateway is wired up: a company submits proof of payment in-app
+// and a superAdmin reviews/approves it (extending currentPeriodEnd directly,
+// per firestore.rules). This file only runs the daily lapse sweep so overdue
 // companies move trialing/active -> past_due -> locked on schedule.
 
-const SUBSCRIPTION_AMOUNT = 35000;
 const GRACE_PERIOD_DAYS = 5;
 const TRIAL_DAYS = 14;
 
@@ -28,4 +27,4 @@ async function checkAllSubscriptions(db) {
   }
 }
 
-module.exports = { checkAllSubscriptions, SUBSCRIPTION_AMOUNT, TRIAL_DAYS };
+module.exports = { checkAllSubscriptions, TRIAL_DAYS };

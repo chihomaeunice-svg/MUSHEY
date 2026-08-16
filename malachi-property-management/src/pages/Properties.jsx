@@ -10,6 +10,7 @@ import { db } from "../firebase/firebaseConfig";
 import { useCompany } from "../components/CompanyProvider";
 import PhotoUpload from "../components/PhotoUpload";
 import ImportPropertiesModal from "../components/ImportPropertiesModal";
+import { FREQUENCY_LABELS } from "../utils/billing";
 import "../styles/properties.css";
 
 const PROPERTY_TYPES = ["House", "Shop", "Warehouse", "Yard", "Open Space"];
@@ -17,11 +18,35 @@ const ID_TYPES = ["National ID", "Passport", "Voter ID", "Driving License"];
 
 const emptyForm = {
   area: "", type: "", propertyName: "", status: "occupied", tenantName: "",
-  rent: "", contractStart: "", contractEnd: "", phone: "", notes: "",
+  rent: "", rentFrequency: "monthly", contractStart: "", contractEnd: "", phone: "", notes: "",
   idType: "", idNumber: "", idPhotoUrl: "",
   cleaningIncluded: false, cleaningFee: "",
   waterIncluded: false, waterFee: "",
 };
+
+function validateForm(form) {
+  const errors = [];
+  if (!form.area) errors.push("Area is required.");
+  if (!form.propertyName.trim()) errors.push("Property Name is required.");
+  if (form.status === "occupied" && !form.tenantName.trim()) {
+    errors.push("Tenant Name is required for an occupied property — or mark it Vacant instead.");
+  }
+  if (!form.rent) errors.push("Monthly Rent is required.");
+  else if (Number(form.rent) <= 0) errors.push("Monthly Rent must be greater than 0.");
+  if (!form.cleaningIncluded && form.cleaningFee !== "" && Number(form.cleaningFee) < 0) {
+    errors.push("Cleaning fee can't be negative.");
+  }
+  if (!form.waterIncluded && form.waterFee !== "" && Number(form.waterFee) < 0) {
+    errors.push("Water fee can't be negative.");
+  }
+  if (form.contractStart && form.contractEnd && form.contractEnd < form.contractStart) {
+    errors.push("Contract End can't be before Contract Start.");
+  }
+  if (form.phone && !/^[0-9+()\s-]{7,}$/.test(form.phone)) {
+    errors.push("Phone number looks invalid — use digits only (e.g. 0712345678).");
+  }
+  return errors;
+}
 
 function Properties({ setCurrentPage }) {
   const { membership, company, refreshCompany } = useCompany();
@@ -38,6 +63,7 @@ function Properties({ setCurrentPage }) {
   const [filterArea, setFilterArea] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [saving, setSaving]         = useState(false);
+  const [formErrors, setFormErrors] = useState([]);
   const [mounted, setMounted]       = useState(false);
 
   useEffect(() => { loadProperties(); }, [membership?.companyId]);
@@ -68,6 +94,7 @@ function Properties({ setCurrentPage }) {
   const openAdd = () => {
     setForm(emptyForm);
     setEditMode(false);
+    setFormErrors([]);
     setShowModal(true);
   };
 
@@ -75,7 +102,7 @@ function Properties({ setCurrentPage }) {
     setForm({
       area: p.area, type: p.type, propertyName: p.propertyName,
       status: p.status || "occupied",
-      tenantName: p.tenantName, rent: p.rent,
+      tenantName: p.tenantName, rent: p.rent, rentFrequency: p.rentFrequency || "monthly",
       contractStart: p.contractStart, contractEnd: p.contractEnd,
       phone: p.phone || "", notes: p.notes || "",
       idType: p.idType || "", idNumber: p.idNumber || "", idPhotoUrl: p.idPhotoUrl || "",
@@ -84,18 +111,17 @@ function Properties({ setCurrentPage }) {
     });
     setEditMode(true);
     setEditId(p.id);
+    setFormErrors([]);
     setShowModal(true);
   };
 
   const handleSave = async () => {
-    if (!form.area || !form.propertyName) {
-      alert("Area and Property Name are required.");
+    const errors = validateForm(form);
+    if (errors.length > 0) {
+      setFormErrors(errors);
       return;
     }
-    if (form.status === "occupied" && !form.tenantName) {
-      alert("Tenant Name is required for an occupied property — or mark it Vacant instead.");
-      return;
-    }
+    setFormErrors([]);
     setSaving(true);
     try {
       const data = {
@@ -105,6 +131,7 @@ function Properties({ setCurrentPage }) {
         status: form.status,
         tenantName: form.status === "vacant" ? "" : form.tenantName,
         rent: form.rent,
+        rentFrequency: form.rentFrequency,
         contractStart: form.status === "vacant" ? "" : form.contractStart,
         contractEnd: form.status === "vacant" ? "" : form.contractEnd,
         phone: form.status === "vacant" ? "" : form.phone,
@@ -132,7 +159,7 @@ function Properties({ setCurrentPage }) {
       setShowModal(false);
       loadProperties();
     } catch (e) {
-      alert("Error saving: " + e.message);
+      setFormErrors([`Couldn't save: ${e.message}`]);
     } finally {
       setSaving(false);
     }
@@ -199,6 +226,7 @@ function Properties({ setCurrentPage }) {
           <ImportPropertiesModal
             companyId={membership.companyId}
             existingAreas={areas}
+            existingProperties={properties}
             refreshCompany={refreshCompany}
             onClose={() => setShowImport(false)}
             onImported={loadProperties}
@@ -349,6 +377,15 @@ function Properties({ setCurrentPage }) {
               </button>
             </div>
             <div className="modal-body">
+              {formErrors.length > 0 && (
+                <div className="import-error-banner">
+                  {formErrors.length === 1 ? formErrors[0] : (
+                    <ul style={{ margin: 0, paddingLeft: 18 }}>
+                      {formErrors.map((err) => <li key={err}>{err}</li>)}
+                    </ul>
+                  )}
+                </div>
+              )}
               <div className="form-row">
                 <div className="form-group">
                   <label>Area *</label>
@@ -453,14 +490,24 @@ function Properties({ setCurrentPage }) {
                 </>
               )}
 
-              <div className="form-group">
-                <label>Monthly Rent (TZS)</label>
-                <input
-                  type="number"
-                  placeholder="e.g. 250000"
-                  value={form.rent}
-                  onChange={(e) => set("rent", e.target.value)}
-                />
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Rent Amount (TZS) *</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 250000"
+                    value={form.rent}
+                    onChange={(e) => set("rent", e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Collected</label>
+                  <select value={form.rentFrequency} onChange={(e) => set("rentFrequency", e.target.value)}>
+                    {Object.entries(FREQUENCY_LABELS).map(([k, label]) => (
+                      <option key={k} value={k}>{label}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="form-row">
@@ -525,6 +572,7 @@ function Properties({ setCurrentPage }) {
         <ImportPropertiesModal
           companyId={membership.companyId}
           existingAreas={areas}
+          existingProperties={properties}
           refreshCompany={refreshCompany}
           onClose={() => setShowImport(false)}
           onImported={loadProperties}

@@ -7,20 +7,24 @@ import { useState } from "react";
 import Landing from "../pages/Landing";
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
+import InstallPrompt from "./InstallPrompt";
 
 export default function AuthGate() {
   const [mode, setMode] = useState("landing");
 
-  if (mode === "landing") {
-    return (
-      <Landing
-        onGetStarted={() => setMode("signup")}
-        onSignIn={() => setMode("login")}
-      />
-    );
-  }
-
-  return mode === "login"
-    ? <Login onSwitchToSignup={() => setMode("signup")} onBack={() => setMode("landing")} />
-    : <Signup onSwitchToLogin={() => setMode("login")} onBack={() => setMode("landing")} />;
+  return (
+    <>
+      <InstallPrompt />
+      {mode === "landing" ? (
+        <Landing
+          onGetStarted={() => setMode("signup")}
+          onSignIn={() => setMode("login")}
+        />
+      ) : mode === "login" ? (
+        <Login onSwitchToSignup={() => setMode("signup")} onBack={() => setMode("landing")} />
+      ) : (
+        <Signup onSwitchToLogin={() => setMode("login")} onBack={() => setMode("landing")} />
+      )}
+    </>
+  );
 }

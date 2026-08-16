@@ -144,8 +144,8 @@ export default function Landing({ onGetStarted, onSignIn }) {
 
       <section className="landing-pricing">
         <div className="landing-pricing-card">
-          <div className="landing-pricing-amount">35,000 <span>TZS / month</span></div>
-          <p>One flat price per company, however many properties you manage. Start with a 14-day free trial — no payment details needed up front.</p>
+          <div className="landing-pricing-amount" style={{ fontSize: 28 }}>Simple, fair pricing</div>
+          <p>One plan per company, tailored to how many properties you manage. Start with a 14-day free trial — no payment details needed up front, and no fixed monthly billing cycle required.</p>
           <button className="btn btn-primary" onClick={onGetStarted}>Start free trial</button>
         </div>
       </section>

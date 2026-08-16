@@ -8,15 +8,16 @@ import { collection, doc, updateDoc, writeBatch } from "firebase/firestore";
 import { X, UploadSimple, DownloadSimple } from "@phosphor-icons/react";
 import { db } from "../firebase/firebaseConfig";
 import { parseCsv, downloadCsv } from "../utils/csv";
+import { FREQUENCIES } from "../utils/billing";
 
 const TEMPLATE_HEADERS = [
   "Area", "Type", "Property Name", "Status", "Tenant Name", "Phone",
-  "Rent", "Contract Start", "Contract End", "ID Type", "ID Number", "Notes",
+  "Rent", "Rent Frequency", "Contract Start", "Contract End", "ID Type", "ID Number", "Notes",
 ];
 
 const TEMPLATE_EXAMPLE = [
   "Kinondoni", "House", "House 12", "occupied", "Amina Juma", "0712345678",
-  "250000", "2026-01-01", "2026-12-31", "National ID", "1990-1-2-345678", "",
+  "250000", "monthly", "2026-01-01", "2026-12-31", "National ID", "1990-1-2-345678", "",
 ];
 
 const FIELD_BY_HEADER = {
@@ -35,6 +36,9 @@ const FIELD_BY_HEADER = {
   phonenumber: "phone",
   rent: "rent",
   monthlyrent: "rent",
+  rentfrequency: "rentFrequency",
+  frequency: "rentFrequency",
+  collected: "rentFrequency",
   contractstart: "contractStart",
   contractend: "contractEnd",
   idtype: "idType",
@@ -45,6 +49,11 @@ const FIELD_BY_HEADER = {
 const normalizeHeader = (h) => String(h ?? "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
 
 const CHUNK_SIZE = 400; // Firestore batches cap at 500 writes; leave headroom
+
+// Upsert key: same Area + Property Name is treated as "this row updates that
+// existing property" rather than creating a duplicate — so re-uploading a
+// corrected sheet fixes rent/fees in place instead of piling up copies.
+const matchKey = (area, propertyName) => `${area.trim().toLowerCase()}|||${propertyName.trim().toLowerCase()}`;
 
 function parseRows(text) {
   const table = parseCsv(text);
@@ -65,6 +74,22 @@ function parseRows(text) {
     if (!raw.propertyName) errors.push("missing Property Name");
     const status = (raw.status || "occupied").toLowerCase() === "vacant" ? "vacant" : "occupied";
     if (status === "occupied" && !raw.tenantName) errors.push("missing Tenant Name (or set Status to vacant)");
+    if (!raw.rent) errors.push("missing Rent");
+    else if (Number(raw.rent) <= 0) errors.push("Rent must be greater than 0");
+
+    // Left blank, this column is simply not part of the row — for an update
+    // that means "leave whatever frequency the property already has alone"
+    // rather than silently resetting it to monthly.
+    const freqRaw = raw.rentFrequency ? raw.rentFrequency.toLowerCase().replace(/[^a-z0-9]/g, "") : "";
+    const freqMatch = !freqRaw ? undefined : (
+      Object.keys(FREQUENCIES).find((k) => k === freqRaw)
+      || (freqRaw.startsWith("quarter") ? "quarterly"
+        : freqRaw.startsWith("month") ? "monthly"
+        : freqRaw.startsWith("annual") || freqRaw.startsWith("year") ? "annual"
+        : freqRaw.includes("6") || freqRaw.startsWith("semi") || freqRaw.startsWith("bian") ? "semiannual"
+        : null)
+    );
+    if (raw.rentFrequency && !freqMatch) errors.push(`unrecognized Rent Frequency "${raw.rentFrequency}"`);
 
     return {
       line: i + 2,
@@ -77,6 +102,7 @@ function parseRows(text) {
         status,
         tenantName: status === "vacant" ? "" : (raw.tenantName || ""),
         rent: raw.rent || "",
+        rentFrequency: freqMatch, // undefined when not in the CSV — see handleImport
         contractStart: status === "vacant" ? "" : (raw.contractStart || ""),
         contractEnd: status === "vacant" ? "" : (raw.contractEnd || ""),
         phone: status === "vacant" ? "" : (raw.phone || ""),
@@ -91,7 +117,7 @@ function parseRows(text) {
   return { rows, unknownHeaders };
 }
 
-export default function ImportPropertiesModal({ companyId, existingAreas, onClose, onImported, refreshCompany }) {
+export default function ImportPropertiesModal({ companyId, existingAreas, existingProperties, onClose, onImported, refreshCompany }) {
   const [rows, setRows] = useState(null);
   const [unknownHeaders, setUnknownHeaders] = useState([]);
   const [fileName, setFileName] = useState("");
@@ -121,8 +147,16 @@ export default function ImportPropertiesModal({ companyId, existingAreas, onClos
     }
   };
 
-  const validRows = (rows || []).filter((r) => r.valid);
+  const existingByKey = new Map(
+    (existingProperties || []).map((p) => [matchKey(p.area || "", p.propertyName || ""), p.id])
+  );
+
   const invalidRows = (rows || []).filter((r) => !r.valid);
+  const validRows = (rows || [])
+    .filter((r) => r.valid)
+    .map((r) => ({ ...r, existingId: existingByKey.get(matchKey(r.data.area, r.data.propertyName)) || null }));
+  const newCount = validRows.filter((r) => !r.existingId).length;
+  const updateCount = validRows.filter((r) => r.existingId).length;
 
   const handleImport = async () => {
     if (validRows.length === 0) return;
@@ -132,13 +166,24 @@ export default function ImportPropertiesModal({ companyId, existingAreas, onClos
       for (let i = 0; i < validRows.length; i += CHUNK_SIZE) {
         const batch = writeBatch(db);
         for (const row of validRows.slice(i, i + CHUNK_SIZE)) {
-          batch.set(doc(propertiesCol), {
-            ...row.data,
-            rentPaid: false,
-            cleaningPaid: false,
-            waterPaid: false,
-            idVerified: false,
-          });
+          if (row.existingId) {
+            // Update in place — leaves rentPaid/cleaningPaid/waterPaid/idVerified
+            // untouched, since the CSV doesn't represent this month's paid state.
+            // rentFrequency only gets touched if the CSV actually specified it,
+            // so an unrelated correction doesn't quietly reset it to monthly.
+            const updateData = { ...row.data };
+            if (updateData.rentFrequency === undefined) delete updateData.rentFrequency;
+            batch.update(doc(propertiesCol, row.existingId), updateData);
+          } else {
+            batch.set(doc(propertiesCol), {
+              ...row.data,
+              rentFrequency: row.data.rentFrequency || "monthly",
+              rentPaid: false,
+              cleaningPaid: false,
+              waterPaid: false,
+              idVerified: false,
+            });
+          }
         }
         await batch.commit();
       }
@@ -152,7 +197,7 @@ export default function ImportPropertiesModal({ companyId, existingAreas, onClos
         await refreshCompany?.();
       }
 
-      setResult({ imported: validRows.length, skipped: invalidRows.length });
+      setResult({ created: newCount, updated: updateCount, skipped: invalidRows.length });
       onImported?.();
     } catch (err) {
       setParseError("Import failed: " + err.message);
@@ -173,7 +218,8 @@ export default function ImportPropertiesModal({ companyId, existingAreas, onClos
           {result ? (
             <div className="empty-state">
               <p>
-                Imported <strong>{result.imported}</strong> {result.imported === 1 ? "property" : "properties"}.
+                Added <strong>{result.created}</strong> new {result.created === 1 ? "property" : "properties"}
+                {result.updated > 0 && <> and updated <strong>{result.updated}</strong> existing {result.updated === 1 ? "property" : "properties"}</>}.
                 {result.skipped > 0 && ` ${result.skipped} row${result.skipped === 1 ? "" : "s"} skipped — see details before closing.`}
               </p>
             </div>
@@ -182,8 +228,12 @@ export default function ImportPropertiesModal({ companyId, existingAreas, onClos
               <p className="settings-card-sub">
                 Upload a CSV with one row per property. Each landlord's spreadsheet can use any
                 of these column names (any order): Area, Type, Property Name, Status
-                (occupied/vacant), Tenant Name, Phone, Rent, Contract Start, Contract End, ID Type,
-                ID Number, Notes. Only Area and Property Name are required.
+                (occupied/vacant), Tenant Name, Phone, Rent, Rent Frequency
+                (monthly/quarterly/semiannual/annual — defaults to monthly), Contract Start,
+                Contract End, ID Type, ID Number, Notes. Area, Property Name, and Rent are
+                required. A row whose Area + Property Name matches an existing property updates
+                it in place instead of creating a duplicate — paid/verified status is left
+                untouched either way.
               </p>
 
               <div className="import-actions-row">
@@ -206,7 +256,8 @@ export default function ImportPropertiesModal({ companyId, existingAreas, onClos
               {rows && (
                 <>
                   <div className="import-summary">
-                    <span className="badge active">{validRows.length} ready to import</span>
+                    {newCount > 0 && <span className="badge active">{newCount} new</span>}
+                    {updateCount > 0 && <span className="badge expiring">{updateCount} update existing</span>}
                     {invalidRows.length > 0 && (
                       <span className="badge expired">{invalidRows.length} skipped (missing required fields)</span>
                     )}
@@ -248,7 +299,10 @@ export default function ImportPropertiesModal({ companyId, existingAreas, onClos
               onClick={handleImport}
               disabled={!rows || validRows.length === 0 || importing}
             >
-              {importing ? "Importing…" : `Import ${validRows.length || ""} ${validRows.length === 1 ? "Property" : "Properties"}`}
+              {importing
+                ? "Importing…"
+                : `Import ${validRows.length || ""} ${validRows.length === 1 ? "Property" : "Properties"}`
+                  + (updateCount > 0 ? ` (${updateCount} update${updateCount === 1 ? "" : "s"})` : "")}
             </button>
           )}
         </div>

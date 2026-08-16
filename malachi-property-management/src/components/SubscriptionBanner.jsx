@@ -3,6 +3,8 @@
 // overdue or locked. Not dismissable on purpose — this is a billing state,
 // not an informational alert.
 
+import { FREQUENCY_SUFFIX } from "../utils/billing";
+
 export default function SubscriptionBanner({ company, onGoToBilling }) {
   const status = company?.subscriptionStatus;
   if (status !== "past_due" && status !== "locked") return null;
@@ -28,7 +30,12 @@ export default function SubscriptionBanner({ company, onGoToBilling }) {
       <span>
         {locked
           ? <><strong>Subscription locked.</strong> Payment is overdue past the grace period — contact Malachi to restore full access.</>
-          : <><strong>Payment overdue.</strong> Renews at {Number(company.subscriptionAmount || 35000).toLocaleString()} TZS/month — contact Malachi soon to avoid losing access.</>}
+          : <>
+              <strong>Payment overdue.</strong>{" "}
+              {company.subscriptionAmount &&
+                `Renews at ${Number(company.subscriptionAmount).toLocaleString()} TZS ${FREQUENCY_SUFFIX[company.subscriptionFrequency] || "per month"} — `}
+              contact Malachi soon to avoid losing access.
+            </>}
       </span>
       <button
         onClick={onGoToBilling}

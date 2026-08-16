@@ -1,6 +1,7 @@
 // src/components/ContractModal.jsx
 import { WarningCircle, X, Phone, House, Broom, Drop } from "@phosphor-icons/react";
 import { daysUntilExpiry, contractMonths, contractTotalRevenue, fmtTZS } from "../utils/Revenuecalc";
+import { isRentCurrent, monthlyEquivalent, FREQUENCY_LABELS } from "../utils/billing";
 import "../styles/contractModal.css";
 
 export default function ContractModal({ contract, onClose }) {
@@ -8,7 +9,7 @@ export default function ContractModal({ contract, onClose }) {
 
   const days        = daysUntilExpiry(contract.contractEnd);
   const months      = contractMonths(contract.contractStart, contract.contractEnd);
-  const totalValue  = contractTotalRevenue(contract.rent, contract.contractStart, contract.contractEnd);
+  const totalValue  = contractTotalRevenue(monthlyEquivalent(contract), contract.contractStart, contract.contractEnd);
   const initials    = (contract.tenantName || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
 
   const statusColor =
@@ -105,7 +106,7 @@ export default function ContractModal({ contract, onClose }) {
             <div className="cm-section-title">Financial</div>
             <div className="cm-grid">
               <div className="cm-field">
-                <span className="cm-field-label">Monthly Rent</span>
+                <span className="cm-field-label">Rent ({FREQUENCY_LABELS[contract.rentFrequency]?.split(" ")[0] || "Monthly"})</span>
                 <span className="cm-field-value gold">{fmtTZS(contract.rent)}</span>
               </div>
               <div className="cm-field">
@@ -120,7 +121,7 @@ export default function ContractModal({ contract, onClose }) {
             <div className="cm-section-title">Payment Status</div>
             <div className="cm-payment-checks">
               {[
-                { label: "Rent",                   icon: House, paid: contract.rentPaid },
+                { label: "Rent",                   icon: House, paid: isRentCurrent(contract) },
                 { label: "Cleanliness",            icon: Broom, paid: contract.cleaningPaid },
                 { label: "Dirty Water Collection", icon: Drop,  paid: contract.waterPaid },
               ].map(item => (

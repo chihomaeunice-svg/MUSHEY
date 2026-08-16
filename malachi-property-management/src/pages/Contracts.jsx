@@ -5,6 +5,7 @@ import { WarningCircle, FileText, Buildings } from "@phosphor-icons/react";
 import { db } from "../firebase/firebaseConfig";
 import { useCompany } from "../components/CompanyProvider";
 import ContractModal from "../components/Contractmodal";
+import { FREQUENCY_SUFFIX } from "../utils/billing";
 import "../styles/contracts.css";
 
 function Contracts() {
@@ -191,7 +192,7 @@ function Contracts() {
                     {/* Rent */}
                     <div className="contract-rent">
                       {Number(c.rent || 0).toLocaleString()} TZS
-                      <small>per month</small>
+                      <small>{FREQUENCY_SUFFIX[c.rentFrequency] || "per month"}</small>
                     </div>
 
                     {/* Status + click hint */}

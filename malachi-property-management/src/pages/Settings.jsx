@@ -1,6 +1,8 @@
 // pages/Settings.jsx
-// Per-company configuration: profile, where alert emails go, whether tenants
-// must upload a payment receipt, and the list of areas/neighborhoods.
+// Per-company configuration: profile, where alert emails go, receipt
+// numbering, and the list of areas/neighborhoods. A payment proof photo is
+// always required when marking something paid — see RecordPaymentModal —
+// so there's no per-company toggle for that here.
 
 import { useState } from "react";
 import { doc, updateDoc } from "firebase/firestore";
@@ -16,7 +18,6 @@ function Settings() {
     tin: company?.tin || "",
     phone: company?.phone || "",
     notifyEmail: company?.notifyEmail || "",
-    requireReceiptUpload: !!company?.requireReceiptUpload,
     receiptPrefix: company?.receiptPrefix || "MSH",
   });
   const [areas, setAreas] = useState(company?.areas || []);
@@ -56,7 +57,6 @@ function Settings() {
         tin: form.tin,
         phone: form.phone,
         notifyEmail: form.notifyEmail,
-        requireReceiptUpload: form.requireReceiptUpload,
         receiptPrefix: form.receiptPrefix,
         areas,
       });
@@ -118,20 +118,10 @@ function Settings() {
             />
           </div>
 
-          <label className="settings-toggle-row">
-            <input
-              type="checkbox"
-              checked={form.requireReceiptUpload}
-              onChange={(e) => set("requireReceiptUpload", e.target.checked)}
-            />
-            <div>
-              <div className="settings-toggle-label">Require receipt photo after payment</div>
-              <div className="settings-toggle-sub">
-                When on, tenants/staff must attach a photo of the payment slip.
-                When off, uploading a receipt photo stays optional.
-              </div>
-            </div>
-          </label>
+          <p className="settings-card-sub">
+            A payment proof photo is always required when marking rent, cleaning, or water as
+            paid — this can't be turned off, so "Paid" always reflects a real, verifiable payment.
+          </p>
         </div>
 
         {/* Areas */}
