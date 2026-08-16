@@ -1,6 +1,7 @@
 // src/components/RecordPaymentModal.jsx
-// Shown when marking a fee as paid: captures the amount, an optional (or
-// company-required) receipt photo, records the payment, and generates a
+// Shown when marking a fee as paid: captures the amount, a required receipt
+// photo (so "Paid" always reflects a real, verifiable payment — not just a
+// checkbox someone clicked), records the payment, and generates a
 // TRA-styled PDF receipt.
 
 import { useState } from "react";
@@ -19,15 +20,13 @@ export default function RecordPaymentModal({ companyId, company, property, type,
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const requirePhoto = !!company?.requireReceiptUpload;
-
   const handleConfirm = async () => {
     if (!amount || Number(amount) <= 0) {
       setError("Enter the actual amount paid — it must be greater than 0.");
       return;
     }
-    if (requirePhoto && !receiptPhotoUrl) {
-      setError("This company requires a receipt photo before confirming payment.");
+    if (!receiptPhotoUrl) {
+      setError("Attach a photo of the payment proof (M-Pesa message, bank slip, receipt) before confirming — a payment can't be marked paid without it.");
       return;
     }
     setSaving(true);
@@ -70,8 +69,8 @@ export default function RecordPaymentModal({ companyId, company, property, type,
           <PhotoUpload
             storagePath={`companies/${companyId}/properties/${property.id}/receipts`}
             currentUrl={receiptPhotoUrl}
-            label="Receipt Photo"
-            required={requirePhoto}
+            label="Payment Proof Photo"
+            required
             onUploaded={setReceiptPhotoUrl}
           />
 

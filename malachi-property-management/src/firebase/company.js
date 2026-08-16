@@ -41,7 +41,6 @@ export async function registerCompany({ companyName, tin, phone, ownerName, emai
     active: true,
     plan: "trial",
     areas: [],
-    requireReceiptUpload: false,
     receiptPrefix: (companyName || "MAL").slice(0, 3).toUpperCase(),
     nextReceiptNumber: 1,
     // Subscription billing (companies/{companyId}) — these fields are only

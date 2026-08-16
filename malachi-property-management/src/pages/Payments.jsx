@@ -9,6 +9,7 @@ import { db } from "../firebase/firebaseConfig";
 import { useCompany } from "../components/CompanyProvider";
 import RecordPaymentModal from "../components/RecordPaymentModal";
 import InvoiceModal from "../components/InvoiceModal";
+import PaymentHistoryPanel from "../components/PaymentHistoryPanel";
 import { useCountUp } from "../utils/useCountUp";
 import { isRentCurrent, nextPaidThrough, FREQUENCY_LABELS } from "../utils/billing";
 import "../styles/payments.css";
@@ -30,6 +31,7 @@ function Payments() {
   const [paymentModal, setPaymentModal] = useState(null); // { property, field, type }
   const [invoiceProperty, setInvoiceProperty] = useState(null);
   const [mounted, setMounted] = useState(false);
+  const [view, setView] = useState("status"); // "status" | "history"
 
   useEffect(() => { loadProperties(); }, [membership?.companyId]);
 
@@ -113,6 +115,19 @@ function Payments() {
         <p>Track rent, cleaning, and water collection per tenant</p>
       </div>
 
+      <div className="payments-filters" style={{ marginBottom: 20 }}>
+        <button className={`filter-tab ${view === "status" ? "active" : ""}`} onClick={() => setView("status")}>
+          Current Status
+        </button>
+        <button className={`filter-tab ${view === "history" ? "active" : ""}`} onClick={() => setView("history")}>
+          Payment History
+        </button>
+      </div>
+
+      {view === "history" ? (
+        <PaymentHistoryPanel companyId={membership.companyId} />
+      ) : (
+        <>
       {/* Summary chips */}
       <div className="payments-summary">
         <div className="summary-chip stagger-in" style={{ "--stagger-i": 0 }}>
@@ -308,6 +323,8 @@ function Payments() {
             );
           })}
         </div>
+      )}
+        </>
       )}
 
       {paymentModal && (
