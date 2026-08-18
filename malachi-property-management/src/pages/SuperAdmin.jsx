@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import {
   collectionGroup, query, where, orderBy, getDocs, doc, updateDoc, serverTimestamp,
 } from "firebase/firestore";
-import { SignOut, Buildings, CheckCircle, Users, Receipt, Check, X as XIcon } from "@phosphor-icons/react";
+import { SignOut, Buildings, CheckCircle, Users, Receipt, Check, X as XIcon, LockSimple, LockSimpleOpen } from "@phosphor-icons/react";
 import { logout } from "../firebase/company";
 import { listAllCompanies, countCompanyProperties } from "../firebase/company";
 import { db } from "../firebase/firebaseConfig";
@@ -97,6 +97,27 @@ function SuperAdmin() {
       alert("Failed to update: " + e.message);
     } finally {
       setReviewing(null);
+    }
+  };
+
+  const toggleLock = async (company) => {
+    const locking = company.subscriptionStatus !== "locked";
+    if (!window.confirm(
+      locking
+        ? `Lock ${company.name}? They'll lose access to everything except Billing and Settings.`
+        : `Unlock ${company.name}? They'll regain full access immediately.`
+    )) return;
+
+    const today = new Date().toISOString().slice(0, 10);
+    const nextStatus = locking
+      ? "locked"
+      : (company.currentPeriodEnd && company.currentPeriodEnd >= today ? "active" : "past_due");
+
+    try {
+      await updateDoc(doc(db, "companies", company.id), { subscriptionStatus: nextStatus });
+      setCompanies((prev) => prev.map((c) => c.id === company.id ? { ...c, subscriptionStatus: nextStatus } : c));
+    } catch (e) {
+      alert("Failed to update: " + e.message);
     }
   };
 
@@ -232,11 +253,16 @@ function SuperAdmin() {
                   <th>Plan</th>
                   <th>Tenants</th>
                   <th>Enrolled</th>
-                  <th>Status</th>
+                  <th>Subscription</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((c) => (
+                {filtered.map((c) => {
+                  const status = c.subscriptionStatus || "trialing";
+                  const statusClass = status === "locked" ? "expired" : status === "past_due" ? "expiring" : "active";
+                  const locked = status === "locked";
+                  return (
                   <tr key={c.id}>
                     <td>{c.name || "—"}</td>
                     <td>
@@ -250,12 +276,22 @@ function SuperAdmin() {
                     <td>{c.tenantCount}</td>
                     <td>{fmtDate(c.createdAt)}</td>
                     <td>
-                      <span className={`badge ${c.active ? "active" : "expired"}`}>
-                        {c.active ? "Active" : "Inactive"}
+                      <span className={`badge ${statusClass}`} style={{ textTransform: "capitalize" }}>
+                        {status.replace("_", " ")}
                       </span>
                     </td>
+                    <td>
+                      <button
+                        className={`action-btn ${locked ? "" : "delete"}`}
+                        title={locked ? "Unlock account" : "Lock account"}
+                        onClick={() => toggleLock(c)}
+                      >
+                        {locked ? <LockSimpleOpen size={15} /> : <LockSimple size={15} />}
+                      </button>
+                    </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           )}
