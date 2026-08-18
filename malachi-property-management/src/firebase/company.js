@@ -43,6 +43,11 @@ export async function registerCompany({ companyName, tin, phone, ownerName, emai
     areas: [],
     receiptPrefix: (companyName || "MAL").slice(0, 3).toUpperCase(),
     nextReceiptNumber: 1,
+    // A Cloud Function (onCompanyCreated) emails an OTP as soon as this
+    // document is created and flips this to true once verifyEmailOtp
+    // succeeds — see firestore.rules, which blocks the client from setting
+    // this itself.
+    emailVerified: false,
     // Subscription billing (companies/{companyId}) — these fields are only
     // ever changed by a superAdmin (see firestore.rules) after this initial
     // write. There's no fixed price — the rate is agreed with each company
