@@ -36,21 +36,30 @@ service cloud.firestore {
 
     match /companies/{companyId} {
       allow read: if isMember(companyId) || isSuperAdmin();
-      allow create: if signedIn() && request.auth.uid == companyId
-                    && request.resource.data.ownerUid == request.auth.uid;
 
-      // Billing fields: a company member can edit their own settings but
-      // never grant themselves an active/paid state. Only a superAdmin can
-      // touch these — and only these, via reviewing a submitted payment
-      // proof (see subscriptionPayments below) — never ownerUid.
+      // A new company must start unverified and on trial — otherwise the
+      // client could just set emailVerified/subscriptionStatus to whatever
+      // it wants at signup and skip both the OTP check and the trial period.
+      allow create: if signedIn() && request.auth.uid == companyId
+                    && request.resource.data.ownerUid == request.auth.uid
+                    && request.resource.data.emailVerified == false
+                    && request.resource.data.subscriptionStatus == 'trialing';
+
+      // Billing/verification fields: a company member can edit their own
+      // settings but never grant themselves an active/paid/verified state.
+      // Only a superAdmin can touch these — and only these, via reviewing a
+      // submitted payment proof (see subscriptionPayments below) or manually
+      // verifying a customer's email — never ownerUid. emailVerified is
+      // otherwise only ever set by the verifyEmailOtp Cloud Function.
       allow update: if isMember(companyId)
                     && !request.resource.data.diff(resource.data).affectedKeys()
                          .hasAny(['subscriptionStatus', 'subscriptionAmount', 'subscriptionFrequency',
-                                  'currentPeriodEnd', 'paymentProvider', 'lastPaymentAt', 'ownerUid']);
+                                  'currentPeriodEnd', 'paymentProvider', 'lastPaymentAt', 'ownerUid',
+                                  'emailVerified']);
       allow update: if isSuperAdmin()
                     && request.resource.data.diff(resource.data).affectedKeys()
                          .hasOnly(['subscriptionStatus', 'subscriptionAmount', 'subscriptionFrequency',
-                                   'currentPeriodEnd', 'paymentProvider', 'lastPaymentAt']);
+                                   'currentPeriodEnd', 'paymentProvider', 'lastPaymentAt', 'emailVerified']);
       allow delete: if false;
 
       // Proof-of-payment submissions: a member can submit their own (as
@@ -70,6 +79,15 @@ service cloud.firestore {
       match /{document=**} {
         allow read, write: if isMember(companyId);
       }
+    }
+
+    // OTP codes: never readable or writable by any client, at all — only
+    // the Cloud Functions (Admin SDK, which bypasses these rules) that
+    // generate and verify them ever touch this collection. If the client
+    // could read this, the very user it's meant to verify could just read
+    // their own code out of Firestore instead of checking their email.
+    match /otpVerifications/{companyId} {
+      allow read, write: if false;
     }
   }
 }

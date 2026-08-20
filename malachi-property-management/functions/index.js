@@ -9,11 +9,13 @@
 // Requires the project to be on the Blaze (pay-as-you-go) plan.
 
 const { onSchedule } = require("firebase-functions/v2/scheduler");
-const { onDocumentUpdated } = require("firebase-functions/v2/firestore");
+const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 const { sendEmail } = require("./email");
 const { sendSms } = require("./sms");
 const subscriptions = require("./subscriptions");
+const otp = require("./otp");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -155,3 +157,22 @@ exports.dailySubscriptionCheck = onSchedule(
     await subscriptions.checkAllSubscriptions(db);
   }
 );
+
+/** Fires when a new company registers: emails an OTP to them, notifies superAdmins. */
+exports.onCompanyCreated = onDocumentCreated(
+  "companies/{companyId}",
+  async (event) => {
+    const company = event.data.data();
+    await otp.onCompanyCreated(db, event.params.companyId, company);
+  }
+);
+
+exports.verifyEmailOtp = onCall(async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Sign in first.");
+  return otp.verifyEmailOtp(db, request.auth.uid, request.data);
+});
+
+exports.resendEmailOtp = onCall(async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Sign in first.");
+  return otp.resendEmailOtp(db, request.auth.uid, request.data);
+});

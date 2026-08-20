@@ -11,13 +11,14 @@ import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Billing from "./pages/Billing";
 import SuperAdmin from "./pages/SuperAdmin";
+import VerifyEmail from "./pages/VerifyEmail";
 import { AuthProvider } from "./components/AuthProvider";
 import { CompanyProvider, useCompany } from "./components/CompanyProvider";
 import "./styles/globals.css";
 
 function Screens() {
   const [currentPage, setCurrentPage] = useState("dashboard");
-  const { loading, membership, error } = useCompany();
+  const { loading, membership, company, error, refreshCompany } = useCompany();
 
   if (loading) {
     return <div className="app-loading">Loading your workspace…</div>;
@@ -35,6 +36,19 @@ function Screens() {
           <SignOut size={15} weight="regular" /> Sign Out
         </button>
       </div>
+    );
+  }
+
+  // emailVerified is only required going forward — companies from before this
+  // field existed have it as undefined, not false, and are grandfathered in
+  // rather than locked out with no code ever having been sent to them.
+  if (company && company.emailVerified === false) {
+    return (
+      <VerifyEmail
+        companyId={membership.companyId}
+        email={company.contactEmail}
+        onVerified={refreshCompany}
+      />
     );
   }
 
