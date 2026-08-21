@@ -20,6 +20,15 @@ const otp = require("./otp");
 admin.initializeApp();
 const db = admin.firestore();
 
+// v2 functions only get process.env populated for secrets they explicitly
+// declare here — setting a secret with `firebase functions:secrets:set`
+// alone does nothing for a function that doesn't list it. Any function that
+// calls sendEmail/sendSms (even indirectly, like onCompanyCreated -> otp.js)
+// needs the matching list below, or the send silently falls back to the
+// outbox with no visible error.
+const EMAIL_SECRETS = ["EMAIL_PROVIDER", "RESEND_API_KEY", "RESEND_FROM", "SENDGRID_API_KEY", "SENDGRID_FROM"];
+const SMS_SECRETS = ["SMS_PROVIDER", "BEEM_API_KEY", "BEEM_SECRET_KEY", "BEEM_SENDER_ID", "AT_API_KEY", "AT_USERNAME", "AT_SENDER_ID"];
+
 const EXPIRY_TRIGGER_DAYS = [14, 7, 1];
 const RENT_DUE_DAYS_BEFORE_MONTH_END = 5;
 
@@ -47,7 +56,7 @@ async function saveNotifLog(companyId, propertyId, log) {
 
 /** Runs once a day: contract-expiry + monthly rent-due reminders, per company. */
 exports.dailyNotifications = onSchedule(
-  { schedule: "0 7 * * *", timeZone: "Africa/Dar_es_Salaam" },
+  { schedule: "0 7 * * *", timeZone: "Africa/Dar_es_Salaam", secrets: [...EMAIL_SECRETS, ...SMS_SECRETS] },
   async () => {
     const today = new Date();
     const companiesSnap = await db.collection("companies").where("active", "==", true).get();
@@ -123,7 +132,7 @@ exports.dailyNotifications = onSchedule(
 
 /** Fires immediately when rentPaid flips from false/unset to true. */
 exports.onRentPaid = onDocumentUpdated(
-  "companies/{companyId}/properties/{propertyId}",
+  { document: "companies/{companyId}/properties/{propertyId}", secrets: [...EMAIL_SECRETS, ...SMS_SECRETS] },
   async (event) => {
     const before = event.data.before.data();
     const after = event.data.after.data();
@@ -160,7 +169,7 @@ exports.dailySubscriptionCheck = onSchedule(
 
 /** Fires when a new company registers: emails an OTP to them, notifies superAdmins. */
 exports.onCompanyCreated = onDocumentCreated(
-  "companies/{companyId}",
+  { document: "companies/{companyId}", secrets: EMAIL_SECRETS },
   async (event) => {
     const company = event.data.data();
     await otp.onCompanyCreated(db, event.params.companyId, company);
@@ -172,7 +181,7 @@ exports.verifyEmailOtp = onCall(async (request) => {
   return otp.verifyEmailOtp(db, request.auth.uid, request.data);
 });
 
-exports.resendEmailOtp = onCall(async (request) => {
+exports.resendEmailOtp = onCall({ secrets: EMAIL_SECRETS }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Sign in first.");
   return otp.resendEmailOtp(db, request.auth.uid, request.data);
 });
