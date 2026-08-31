@@ -16,6 +16,8 @@ const { sendEmail } = require("./email");
 const { sendSms } = require("./sms");
 const subscriptions = require("./subscriptions");
 const otp = require("./otp");
+const backup = require("./backup");
+const staff = require("./staff");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -184,4 +186,24 @@ exports.verifyEmailOtp = onCall(async (request) => {
 exports.resendEmailOtp = onCall({ secrets: EMAIL_SECRETS }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Sign in first.");
   return otp.resendEmailOtp(db, request.auth.uid, request.data);
+});
+
+/** Runs once a week: exports the whole database to Storage (see backup.js for the one-time IAM grant this needs). */
+exports.weeklyBackup = onSchedule(
+  { schedule: "0 3 * * 0", timeZone: "Africa/Dar_es_Salaam" },
+  async () => {
+    await backup.runBackup();
+  }
+);
+
+/** Owner-only: creates a staff login under the caller's own company. */
+exports.inviteStaff = onCall({ secrets: EMAIL_SECRETS }, async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Sign in first.");
+  return staff.inviteStaff(db, request.auth.uid, request.data);
+});
+
+/** Owner-only: revokes a staff login from the caller's own company. */
+exports.removeStaffMember = onCall(async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Sign in first.");
+  return staff.removeStaffMember(db, request.auth.uid, request.data);
 });
