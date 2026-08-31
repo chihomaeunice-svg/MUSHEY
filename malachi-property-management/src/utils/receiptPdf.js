@@ -4,15 +4,16 @@
 // official TRA/EFD fiscal document — that requires TRA-issued device
 // certification that only the landlord/company itself can obtain.
 
-import jsPDF from "jspdf";
-
 const TYPE_LABELS = {
   rent: "Rent",
   cleaning: "Cleanliness Fee",
   water: "Dirty Water Collection",
 };
 
-export function generateReceiptPdf({ company, payment }) {
+// jsPDF is only ever needed at the moment a receipt is actually printed —
+// loading it dynamically here keeps it out of the Payments page's own bundle.
+export async function generateReceiptPdf({ company, payment }) {
+  const { default: jsPDF } = await import("jspdf");
   const pdf = new jsPDF({ unit: "mm", format: [148, 210] }); // A5
   const pageWidth = 148;
   const marginX = 12;

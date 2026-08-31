@@ -8,13 +8,14 @@ import { useEffect, useState } from "react";
 import {
   collectionGroup, query, where, orderBy, getDocs, doc, updateDoc, serverTimestamp,
 } from "firebase/firestore";
-import { SignOut, Buildings, CheckCircle, Users, Receipt, Check, X as XIcon, LockSimple, LockSimpleOpen } from "@phosphor-icons/react";
+import { SignOut, Buildings, CheckCircle, Users, Receipt, Check, X as XIcon, LockSimple, LockSimpleOpen, PencilSimple } from "@phosphor-icons/react";
 import { logout } from "../firebase/company";
 import { listAllCompanies, countCompanyProperties } from "../firebase/company";
 import { db } from "../firebase/firebaseConfig";
 import { auth } from "../firebase/auth";
-import { addMonths, FREQUENCIES } from "../utils/billing";
+import { addMonths, FREQUENCIES, FREQUENCY_SUFFIX } from "../utils/billing";
 import BrandMark from "../components/BrandMark";
+import SetRateModal from "../components/SetRateModal";
 import "../styles/superadmin.css";
 
 function extendedPeriodEnd(company) {
@@ -37,6 +38,7 @@ function SuperAdmin() {
   const [pendingProofs, setPendingProofs] = useState([]);
   const [loadingProofs, setLoadingProofs] = useState(true);
   const [reviewing, setReviewing] = useState(null); // paymentId currently being approved/rejected
+  const [ratingCompany, setRatingCompany] = useState(null); // company currently open in SetRateModal
 
   useEffect(() => { load(); loadPendingProofs(); }, []);
 
@@ -254,6 +256,7 @@ function SuperAdmin() {
                   <th>Tenants</th>
                   <th>Enrolled</th>
                   <th>Subscription</th>
+                  <th>Rate</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -281,13 +284,27 @@ function SuperAdmin() {
                       </span>
                     </td>
                     <td>
-                      <button
-                        className={`action-btn ${locked ? "" : "delete"}`}
-                        title={locked ? "Unlock account" : "Lock account"}
-                        onClick={() => toggleLock(c)}
-                      >
-                        {locked ? <LockSimpleOpen size={15} /> : <LockSimple size={15} />}
-                      </button>
+                      {c.subscriptionAmount
+                        ? `${Number(c.subscriptionAmount).toLocaleString()} TZS ${FREQUENCY_SUFFIX[c.subscriptionFrequency] || "per month"}`
+                        : <span style={{ color: "var(--text-sub)" }}>Not set</span>}
+                    </td>
+                    <td>
+                      <div className="row-actions">
+                        <button
+                          className="action-btn"
+                          title="Set rate"
+                          onClick={() => setRatingCompany(c)}
+                        >
+                          <PencilSimple size={15} />
+                        </button>
+                        <button
+                          className={`action-btn ${locked ? "" : "delete"}`}
+                          title={locked ? "Unlock account" : "Lock account"}
+                          onClick={() => toggleLock(c)}
+                        >
+                          {locked ? <LockSimpleOpen size={15} /> : <LockSimple size={15} />}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                   );
@@ -297,6 +314,17 @@ function SuperAdmin() {
           )}
         </div>
       </div>
+
+      {ratingCompany && (
+        <SetRateModal
+          company={ratingCompany}
+          onClose={() => setRatingCompany(null)}
+          onSaved={(updated) => {
+            setCompanies((prev) => prev.map((c) => c.id === updated.id ? { ...c, ...updated } : c));
+            setRatingCompany(null);
+          }}
+        />
+      )}
     </div>
   );
 }

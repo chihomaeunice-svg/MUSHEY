@@ -1,20 +1,23 @@
 // App.jsx
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { SignOut } from "@phosphor-icons/react";
 import { logout } from "./firebase/auth";
 import Layout from "./pages/Layout";
-import Dashboard from "./pages/Dashboard";
-import Properties from "./pages/Properties";
-import Contracts from "./pages/Contracts";
-import Payments from "./pages/Payments";
-import Reports from "./pages/Reports";
-import Settings from "./pages/Settings";
-import Billing from "./pages/Billing";
-import SuperAdmin from "./pages/SuperAdmin";
-import VerifyEmail from "./pages/VerifyEmail";
 import { AuthProvider } from "./components/AuthProvider";
 import { CompanyProvider, useCompany } from "./components/CompanyProvider";
 import "./styles/globals.css";
+
+// Split out of the initial bundle — each of these is only ever needed after
+// login, and SuperAdmin's viewer never touches any of the company pages at all.
+const Dashboard   = lazy(() => import("./pages/Dashboard"));
+const Properties  = lazy(() => import("./pages/Properties"));
+const Contracts   = lazy(() => import("./pages/Contracts"));
+const Payments    = lazy(() => import("./pages/Payments"));
+const Reports     = lazy(() => import("./pages/Reports"));
+const Settings    = lazy(() => import("./pages/Settings"));
+const Billing     = lazy(() => import("./pages/Billing"));
+const SuperAdmin  = lazy(() => import("./pages/SuperAdmin"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 
 function Screens() {
   const [currentPage, setCurrentPage] = useState("dashboard");
@@ -25,7 +28,11 @@ function Screens() {
   }
 
   if (membership?.role === "superAdmin") {
-    return <SuperAdmin />;
+    return (
+      <Suspense fallback={<div className="app-loading">Loading your workspace…</div>}>
+        <SuperAdmin />
+      </Suspense>
+    );
   }
 
   if (error || !membership) {
@@ -44,11 +51,13 @@ function Screens() {
   // rather than locked out with no code ever having been sent to them.
   if (company && company.emailVerified === false) {
     return (
-      <VerifyEmail
-        companyId={membership.companyId}
-        email={company.contactEmail}
-        onVerified={refreshCompany}
-      />
+      <Suspense fallback={<div className="app-loading">Loading your workspace…</div>}>
+        <VerifyEmail
+          companyId={membership.companyId}
+          email={company.contactEmail}
+          onVerified={refreshCompany}
+        />
+      </Suspense>
     );
   }
 
@@ -67,7 +76,9 @@ function Screens() {
 
   return (
     <Layout currentPage={currentPage} setCurrentPage={setCurrentPage}>
-      {renderPage()}
+      <Suspense fallback={<div className="app-loading">Loading…</div>}>
+        {renderPage()}
+      </Suspense>
     </Layout>
   );
 }
