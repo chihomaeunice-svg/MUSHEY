@@ -4,8 +4,6 @@
 // separately (fees folded into rent are called out as included, not billed
 // again as their own line).
 
-import jsPDF from "jspdf";
-
 function invoiceNumber(property, period) {
   const periodTag = period.replace("-", "");
   const propertyTag = (property.id || "").slice(-5).toUpperCase();
@@ -17,7 +15,10 @@ function formatPeriod(period) {
   return new Date(year, month - 1, 1).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
 }
 
-export function generateInvoicePdf({ company, property, period, dueDate }) {
+// jsPDF is only needed at the moment an invoice is actually generated —
+// loading it dynamically keeps it out of whichever page bundle calls this.
+export async function generateInvoicePdf({ company, property, period, dueDate }) {
+  const { default: jsPDF } = await import("jspdf");
   const pdf = new jsPDF({ unit: "mm", format: [148, 210] }); // A5
   const pageWidth = 148;
   const marginX = 12;

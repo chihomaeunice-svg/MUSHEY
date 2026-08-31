@@ -5,7 +5,7 @@
 
 import { FREQUENCY_SUFFIX } from "../utils/billing";
 
-export default function SubscriptionBanner({ company, onGoToBilling }) {
+export default function SubscriptionBanner({ company, onGoToBilling, canManageBilling = true }) {
   const status = company?.subscriptionStatus;
   if (status !== "past_due" && status !== "locked") return null;
 
@@ -37,22 +37,24 @@ export default function SubscriptionBanner({ company, onGoToBilling }) {
               contact Malachi soon to avoid losing access.
             </>}
       </span>
-      <button
-        onClick={onGoToBilling}
-        style={{
-          background: "transparent",
-          border: `1px solid currentColor`,
-          color: "inherit",
-          borderRadius: "99px",
-          padding: "5px 14px",
-          fontSize: "12px",
-          fontWeight: 600,
-          cursor: "pointer",
-          whiteSpace: "nowrap",
-        }}
-      >
-        Go to Billing
-      </button>
+      {canManageBilling && (
+        <button
+          onClick={onGoToBilling}
+          style={{
+            background: "transparent",
+            border: `1px solid currentColor`,
+            color: "inherit",
+            borderRadius: "99px",
+            padding: "5px 14px",
+            fontSize: "12px",
+            fontWeight: 600,
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+          }}
+        >
+          Go to Billing
+        </button>
+      )}
     </div>
   );
 }

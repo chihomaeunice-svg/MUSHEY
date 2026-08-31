@@ -8,6 +8,9 @@
 // needs to change.
 
 const admin = require("firebase-admin");
+const { underDailyLimit } = require("./costGuard");
+
+const DAILY_SMS_LIMIT = 500;
 
 /** Converts a local Tanzanian number (0712...) to E.164 (+255712...). */
 function normalizeTzPhone(phone) {
@@ -69,6 +72,12 @@ async function sendViaAfricasTalking({ to, message }) {
 async function sendSms({ to, message }) {
   const normalized = normalizeTzPhone(to);
   if (!normalized) return;
+
+  if (!(await underDailyLimit("sms", DAILY_SMS_LIMIT))) {
+    console.error(`Daily SMS limit (${DAILY_SMS_LIMIT}) reached — queuing to ${normalized} instead of sending.`);
+    await queueToOutbox({ to: normalized, message: `${message} (held: daily send limit reached)` });
+    return;
+  }
 
   const provider = process.env.SMS_PROVIDER; // "beem" | "africastalking" | unset
 

@@ -7,6 +7,9 @@
 // the only place that needs to change.
 
 const admin = require("firebase-admin");
+const { underDailyLimit } = require("./costGuard");
+
+const DAILY_EMAIL_LIMIT = 500;
 
 async function queueToOutbox({ to, subject, html }) {
   await admin.firestore().collection("mail_outbox").add({
@@ -52,6 +55,12 @@ async function sendViaSendgrid({ to, subject, html }) {
 /** Sends (or queues, if no provider is configured yet) one email. */
 async function sendEmail({ to, subject, html }) {
   if (!to) return;
+
+  if (!(await underDailyLimit("email", DAILY_EMAIL_LIMIT))) {
+    console.error(`Daily email limit (${DAILY_EMAIL_LIMIT}) reached — holding "${subject}" to ${to} instead of sending.`);
+    await queueToOutbox({ to, subject, html: `${html}<p><em>(held: daily send limit reached)</em></p>` });
+    return;
+  }
 
   const provider = process.env.EMAIL_PROVIDER; // "resend" | "sendgrid" | unset
 

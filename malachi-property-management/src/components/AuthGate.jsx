@@ -3,11 +3,14 @@
 // then toggles between the sign-in screen and the "register your company"
 // screen once they choose one.
 
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import Landing from "../pages/Landing";
-import Login from "../pages/Login";
-import Signup from "../pages/Signup";
 import InstallPrompt from "./InstallPrompt";
+
+// Login/Signup are only needed once someone clicks past the landing page,
+// so they don't need to be in the very first bundle every visitor downloads.
+const Login = lazy(() => import("../pages/Login"));
+const Signup = lazy(() => import("../pages/Signup"));
 
 export default function AuthGate() {
   const [mode, setMode] = useState("landing");
@@ -20,10 +23,14 @@ export default function AuthGate() {
           onGetStarted={() => setMode("signup")}
           onSignIn={() => setMode("login")}
         />
-      ) : mode === "login" ? (
-        <Login onSwitchToSignup={() => setMode("signup")} onBack={() => setMode("landing")} />
       ) : (
-        <Signup onSwitchToLogin={() => setMode("login")} onBack={() => setMode("landing")} />
+        <Suspense fallback={<div className="app-loading">Loading…</div>}>
+          {mode === "login" ? (
+            <Login onSwitchToSignup={() => setMode("signup")} onBack={() => setMode("landing")} />
+          ) : (
+            <Signup onSwitchToLogin={() => setMode("login")} onBack={() => setMode("landing")} />
+          )}
+        </Suspense>
       )}
     </>
   );

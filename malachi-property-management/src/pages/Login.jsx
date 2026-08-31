@@ -1,7 +1,7 @@
 // src/pages/Login.jsx
 import { useState } from "react";
-import { ArrowLeft, WarningCircle } from "@phosphor-icons/react";
-import { login } from "../firebase/auth";
+import { ArrowLeft, WarningCircle, CheckCircle } from "@phosphor-icons/react";
+import { login, resetPassword } from "../firebase/auth";
 import BrandMark from "../components/BrandMark";
 import HeroSkyline from "../components/HeroSkyline";
 import ThemeToggle from "../components/ThemeToggle";
@@ -15,6 +15,12 @@ export default function Login({ onSwitchToSignup, onBack }) {
   const [loading, setLoading]   = useState(false);
   const brandRef = useParallax(0.6);
 
+  const [mode, setMode] = useState("login"); // "login" | "reset"
+  const [resetEmail, setResetEmail]   = useState("");
+  const [resetSent, setResetSent]     = useState(false);
+  const [resetError, setResetError]   = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+
   const handleSubmit = async (evt) => {
     evt.preventDefault();
     setError("");
@@ -25,6 +31,33 @@ export default function Login({ onSwitchToSignup, onBack }) {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openReset = () => {
+    setResetEmail(email);
+    setResetError("");
+    setResetSent(false);
+    setMode("reset");
+  };
+
+  const handleReset = async (evt) => {
+    evt.preventDefault();
+    setResetError("");
+    setResetLoading(true);
+    try {
+      await resetPassword(resetEmail);
+      setResetSent(true);
+    } catch (err) {
+      // Don't reveal whether an email is registered — treat "not found" the
+      // same as success so this can't be used to enumerate accounts.
+      if (err.code === "auth/user-not-found") {
+        setResetSent(true);
+      } else {
+        setResetError(err.message);
+      }
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -80,62 +113,126 @@ export default function Login({ onSwitchToSignup, onBack }) {
         )}
         <ThemeToggle className="login-theme-toggle" />
         <div className="login-box">
-          <h2 className="login-title">Welcome back</h2>
-          <p className="login-sub">Sign in to your admin account</p>
+          {mode === "reset" ? (
+            <>
+              <h2 className="login-title">Reset your password</h2>
+              <p className="login-sub">We'll email you a link to choose a new one.</p>
 
-          <form onSubmit={handleSubmit}>
-            <div className="login-field">
-              <label htmlFor="email">Email Address</label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@malachi.co.tz"
-                required
-                autoComplete="email"
-              />
-            </div>
+              {resetSent ? (
+                <>
+                  <div className="login-error" style={{ color: "var(--green)" }}>
+                    <CheckCircle size={15} weight="fill" />
+                    If that email is registered, a reset link is on its way — check your inbox.
+                  </div>
+                  <p className="login-toggle">
+                    <button type="button" onClick={() => setMode("login")}>
+                      Back to sign in
+                    </button>
+                  </p>
+                </>
+              ) : (
+                <form onSubmit={handleReset}>
+                  <div className="login-field">
+                    <label htmlFor="resetEmail">Email Address</label>
+                    <input
+                      id="resetEmail"
+                      type="email"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      placeholder="admin@malachi.co.tz"
+                      required
+                      autoComplete="email"
+                    />
+                  </div>
 
-            <div className="login-field">
-              <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                autoComplete="current-password"
-              />
-            </div>
+                  <button type="submit" className="login-btn" disabled={resetLoading}>
+                    {resetLoading && <span className="spinner" />}
+                    {resetLoading ? "Sending…" : "Send reset link"}
+                  </button>
 
-            <button type="submit" className="login-btn" disabled={loading}>
-              {loading && <span className="spinner" />}
-              {loading ? "Signing in…" : "Sign in"}
-            </button>
+                  {resetError && (
+                    <div className="login-error">
+                      <WarningCircle size={15} weight="fill" /> {resetError}
+                    </div>
+                  )}
 
-            {error && (
-              <div className="login-error">
-                <WarningCircle size={15} weight="fill" /> {error}
+                  <p className="login-toggle">
+                    <button type="button" onClick={() => setMode("login")}>
+                      Back to sign in
+                    </button>
+                  </p>
+                </form>
+              )}
+            </>
+          ) : (
+            <>
+              <h2 className="login-title">Welcome back</h2>
+              <p className="login-sub">Sign in to your admin account</p>
+
+              <form onSubmit={handleSubmit}>
+                <div className="login-field">
+                  <label htmlFor="email">Email Address</label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="admin@malachi.co.tz"
+                    required
+                    autoComplete="email"
+                  />
+                </div>
+
+                <div className="login-field">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                    <label htmlFor="password">Password</label>
+                    <button
+                      type="button"
+                      onClick={openReset}
+                      style={{ background: "none", border: "none", color: "var(--accent)", fontSize: 12, cursor: "pointer", padding: 0 }}
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                  <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    autoComplete="current-password"
+                  />
+                </div>
+
+                <button type="submit" className="login-btn" disabled={loading}>
+                  {loading && <span className="spinner" />}
+                  {loading ? "Signing in…" : "Sign in"}
+                </button>
+
+                {error && (
+                  <div className="login-error">
+                    <WarningCircle size={15} weight="fill" /> {error}
+                  </div>
+                )}
+              </form>
+
+              <p className="login-toggle">
+                New landlord or company?{' '}
+                <button type="button" onClick={onSwitchToSignup}>
+                  Register your company
+                </button>
+              </p>
+
+              <div className="login-divider">
+                <span>Malachi Property Management</span>
               </div>
-            )}
-          </form>
 
-          <p className="login-toggle">
-            New landlord or company?{' '}
-            <button type="button" onClick={onSwitchToSignup}>
-              Register your company
-            </button>
-          </p>
-
-          <div className="login-divider">
-            <span>Malachi Property Management</span>
-          </div>
-
-          <p className="login-footer-note">
-            Each company's data is fully separate.<br />Staff accounts are added by your company owner.
-          </p>
+              <p className="login-footer-note">
+                Each company's data is fully separate.<br />Staff accounts are added by your company owner.
+              </p>
+            </>
+          )}
         </div>
       </div>
 
