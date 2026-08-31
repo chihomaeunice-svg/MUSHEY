@@ -76,6 +76,17 @@ service cloud.firestore {
         allow delete: if false;
       }
 
+      // Staff directory: a display list of who has a login under this
+      // company. Only the inviteStaff/removeStaffMember Cloud Functions
+      // (Admin SDK, which bypasses these rules) ever write here — a client
+      // write is denied outright so a staff member can't edit the roster
+      // themselves. This is a UI convenience, not the source of truth for
+      // access: actual permission still comes from users/{uid}.companyId.
+      match /staff/{staffUid} {
+        allow read: if isMember(companyId) || isSuperAdmin();
+        allow write: if false;
+      }
+
       match /{document=**} {
         allow read, write: if isMember(companyId);
       }
@@ -87,6 +98,13 @@ service cloud.firestore {
     // could read this, the very user it's meant to verify could just read
     // their own code out of Firestore instead of checking their email.
     match /otpVerifications/{companyId} {
+      allow read, write: if false;
+    }
+
+    // Daily send counters backing the cost guard in costGuard.js — only
+    // Cloud Functions (Admin SDK) ever touch this. No client reason to
+    // read or write it.
+    match /_costGuards/{doc} {
       allow read, write: if false;
     }
   }

@@ -69,7 +69,9 @@ function Screens() {
       case "payments":   return <Payments />;
       case "reports":    return <Reports />;
       case "settings":   return <Settings />;
-      case "billing":    return <Billing />;
+      // Billing is an owner-only concern — a staff login can never reach it,
+      // regardless of how currentPage got set (nav, a banner shortcut, etc.).
+      case "billing":    return membership.role === "owner" ? <Billing /> : <Dashboard setCurrentPage={setCurrentPage} />;
       default:           return <Dashboard setCurrentPage={setCurrentPage} />;
     }
   };

@@ -4,12 +4,106 @@
 // always required when marking something paid — see RecordPaymentModal —
 // so there's no per-company toggle for that here.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { doc, updateDoc } from "firebase/firestore";
-import { X } from "@phosphor-icons/react";
+import { X, WarningCircle } from "@phosphor-icons/react";
 import { db } from "../firebase/firebaseConfig";
 import { useCompany } from "../components/CompanyProvider";
+import { inviteStaff, listStaff, removeStaffMember } from "../firebase/staff";
 import "../styles/settings.css";
+
+function TeamCard({ companyId }) {
+  const [staffList, setStaffList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [inviting, setInviting] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+
+  useEffect(() => { load(); }, [companyId]);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      setStaffList(await listStaff(companyId));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInvite = async () => {
+    if (!email.trim()) { setError("Enter an email address."); return; }
+    setInviting(true);
+    setError("");
+    setNotice("");
+    try {
+      await inviteStaff(email.trim(), name.trim());
+      setNotice(`Invited — ${email} will get an email to set their password.`);
+      setName("");
+      setEmail("");
+      await load();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const handleRemove = async (member) => {
+    if (!window.confirm(`Remove ${member.name || member.email}? They'll lose access immediately.`)) return;
+    try {
+      await removeStaffMember(member.id);
+      await load();
+    } catch (e) {
+      alert("Failed to remove: " + e.message);
+    }
+  };
+
+  return (
+    <div className="card">
+      <h2 className="settings-card-title">Team</h2>
+      <p className="settings-card-sub">
+        Staff you invite can manage properties, tenants, contracts, and payments — they can't touch
+        billing or invite/remove other staff.
+      </p>
+
+      {loading ? (
+        <p className="settings-card-sub">Loading…</p>
+      ) : staffList.length === 0 ? (
+        <p className="settings-card-sub">No staff added yet.</p>
+      ) : (
+        <div className="settings-area-chips" style={{ marginBottom: 12 }}>
+          {staffList.map((s) => (
+            <span className="settings-area-chip" key={s.id}>
+              {s.name || s.email}
+              <button type="button" onClick={() => handleRemove(s)} title="Remove" aria-label={`Remove ${s.name || s.email}`}>
+                <X size={11} />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      <div className="form-group">
+        <label>Name</label>
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Amina Juma" />
+      </div>
+      <div className="form-group">
+        <label>Email</label>
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="staff@example.com" />
+      </div>
+      <button type="button" className="btn btn-ghost" onClick={handleInvite} disabled={inviting}>
+        {inviting ? "Inviting…" : "Invite Staff"}
+      </button>
+
+      {error && <div className="login-error" style={{ marginTop: 12 }}><WarningCircle size={15} weight="fill" /> {error}</div>}
+      {notice && <p className="settings-card-sub" style={{ marginTop: 12, color: "var(--accent)" }}>{notice}</p>}
+    </div>
+  );
+}
 
 function Settings() {
   const { membership, company, refreshCompany } = useCompany();
@@ -149,6 +243,8 @@ function Settings() {
             ))}
           </div>
         </div>
+
+        {membership.role === "owner" && <TeamCard companyId={membership.companyId} />}
       </div>
 
       <div className="settings-footer">

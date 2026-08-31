@@ -53,8 +53,12 @@ function Layout({ currentPage, setCurrentPage, children }) {
   const locked = company?.subscriptionStatus === "locked";
   const companyInitial = (company?.name || "M").trim().charAt(0).toUpperCase() || "M";
 
+  // Billing is an owner-only concern — staff can run the day-to-day
+  // property/tenant/payment work but don't manage the subscription.
+  const visibleNavItems = navItems.filter((item) => item.page !== "billing" || membership?.role === "owner");
+
   // Pages reachable right now, in nav order — used for swipe navigation.
-  const swipablePages = navItems
+  const swipablePages = visibleNavItems
     .filter((item) => !(locked && !ALLOWED_WHEN_LOCKED.includes(item.page)))
     .map((item) => item.page);
 
@@ -84,9 +88,11 @@ function Layout({ currentPage, setCurrentPage, children }) {
 
   useEffect(() => {
     if (locked && !ALLOWED_WHEN_LOCKED.includes(currentPage)) {
-      setCurrentPage("billing");
+      // Staff can't see Billing (owner-only) — land them on Settings instead,
+      // since resolving a lock is an owner concern anyway.
+      setCurrentPage(membership?.role === "owner" ? "billing" : "settings");
     }
-  }, [locked, currentPage]);
+  }, [locked, currentPage, membership?.role]);
 
   useEffect(() => {
     if (!membership?.companyId) return;
@@ -136,7 +142,7 @@ function Layout({ currentPage, setCurrentPage, children }) {
 
         <nav className="sidebar-nav">
           <div className="nav-section-label">Main Menu</div>
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const disabled = locked && !ALLOWED_WHEN_LOCKED.includes(item.page);
             const Icon = item.icon;
             return (
@@ -247,6 +253,7 @@ function Layout({ currentPage, setCurrentPage, children }) {
           <SubscriptionBanner
             company={company}
             onGoToBilling={() => setCurrentPage("billing")}
+            canManageBilling={membership?.role === "owner"}
           />
           <ExpiryBanner
             properties={allProperties}
