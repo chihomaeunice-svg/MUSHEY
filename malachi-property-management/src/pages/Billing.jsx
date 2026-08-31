@@ -9,6 +9,7 @@ import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
 import { useCompany } from "../components/CompanyProvider";
 import SubmitPaymentProofModal from "../components/SubmitPaymentProofModal";
+import WhatsAppButton from "../components/WhatsAppButton";
 import { FREQUENCY_SUFFIX } from "../utils/billing";
 import "../styles/billing.css";
 
@@ -94,9 +95,14 @@ function Billing() {
             your account will be updated once payment is confirmed.
           </p>
 
-          <button className="btn btn-primary" style={{ marginTop: 14 }} onClick={() => setShowProofModal(true)}>
-            Submit Proof of Payment
-          </button>
+          <div style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap" }}>
+            <button className="btn btn-primary" onClick={() => setShowProofModal(true)}>
+              Submit Proof of Payment
+            </button>
+            <WhatsAppButton message={`Hi, I'd like help with billing for ${company.name}.`}>
+              Ask on WhatsApp
+            </WhatsAppButton>
+          </div>
         </div>
 
         <div className="card">

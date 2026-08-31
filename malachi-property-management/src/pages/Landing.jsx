@@ -10,6 +10,7 @@ import {
 import BrandMark from "../components/BrandMark";
 import ThemeToggle from "../components/ThemeToggle";
 import LandingSkyline from "../components/LandingSkyline";
+import WhatsAppButton from "../components/WhatsAppButton";
 import { useParallax } from "../utils/useParallax";
 import "../styles/landing.css";
 
@@ -154,7 +155,12 @@ export default function Landing({ onGetStarted, onSignIn }) {
         <span className="landing-footer-brand">
           <BrandMark size={16} /> Malachi Property Management © {new Date().getFullYear()}
         </span>
-        <button className="landing-footer-link" onClick={onSignIn}>Sign in</button>
+        <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+          <WhatsAppButton className="landing-footer-link" message="Hi, I have a question about Malachi Property Management.">
+            Chat with us
+          </WhatsAppButton>
+          <button className="landing-footer-link" onClick={onSignIn}>Sign in</button>
+        </div>
       </footer>
     </div>
   );
