@@ -5,7 +5,7 @@
 //
 // Format: E.164 digits only, no "+", e.g. "255712345678" for a Tanzanian
 // number starting 0712... (drop the leading 0, prefix with 255).
-export const WHATSAPP_NUMBER = "";
+export const WHATSAPP_NUMBER = "255786792165";
 
 /**
  * Builds a wa.me link with an optional prefilled message.
