@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "mushey-prop",
+    "site": "mushey-real-estate",
     "public": "dist",
     "ignore": [
       "firebase.json",
