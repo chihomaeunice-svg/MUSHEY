@@ -18,6 +18,7 @@ const subscriptions = require("./subscriptions");
 const otp = require("./otp");
 const backup = require("./backup");
 const staff = require("./staff");
+const inquiries = require("./inquiries");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -206,4 +207,9 @@ exports.inviteStaff = onCall({ secrets: EMAIL_SECRETS }, async (request) => {
 exports.removeStaffMember = onCall(async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Sign in first.");
   return staff.removeStaffMember(db, request.auth.uid, request.data);
+});
+
+/** Public: the Landing page "get in touch" form — no sign-in required. */
+exports.submitInquiry = onCall({ secrets: EMAIL_SECRETS }, async (request) => {
+  return inquiries.submitInquiry(db, request.data);
 });

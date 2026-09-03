@@ -107,5 +107,12 @@ service cloud.firestore {
     match /_costGuards/{doc} {
       allow read, write: if false;
     }
+
+    // Landing-page "get in touch" submissions — written only by the
+    // submitInquiry Cloud Function (Admin SDK), which is reachable by
+    // anyone, signed in or not. No client reads or writes this directly.
+    match /inquiries/{doc} {
+      allow read, write: if false;
+    }
   }
 }
