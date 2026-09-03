@@ -6,9 +6,17 @@
 import { WhatsappLogo } from "@phosphor-icons/react";
 import { whatsappLink } from "../utils/contact";
 
-export default function WhatsAppButton({ message, className = "btn btn-ghost", children }) {
+export default function WhatsAppButton({ message, className = "btn btn-ghost", children, floating = false }) {
   const link = whatsappLink(message);
   if (!link) return null;
+
+  if (floating) {
+    return (
+      <a href={link} target="_blank" rel="noreferrer" className="whatsapp-floating" aria-label="Chat on WhatsApp" title="Chat on WhatsApp">
+        <WhatsappLogo size={28} weight="fill" />
+      </a>
+    );
+  }
 
   return (
     <a href={link} target="_blank" rel="noreferrer" className={className}>

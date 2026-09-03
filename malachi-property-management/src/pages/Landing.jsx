@@ -11,6 +11,7 @@ import BrandMark from "../components/BrandMark";
 import ThemeToggle from "../components/ThemeToggle";
 import LandingSkyline from "../components/LandingSkyline";
 import WhatsAppButton from "../components/WhatsAppButton";
+import ContactForm from "../components/ContactForm";
 import { useParallax } from "../utils/useParallax";
 import "../styles/landing.css";
 
@@ -55,6 +56,8 @@ export default function Landing({ onGetStarted, onSignIn }) {
 
   return (
     <div className={`landing ${mounted ? "mounted" : ""}`}>
+      <WhatsAppButton floating message="Hi, I have a question about Malachi Property Management." />
+
       <header className="landing-nav">
         <div className="landing-nav-brand">
           <div className="landing-nav-logo"><BrandMark size={18} /></div>
@@ -149,6 +152,14 @@ export default function Landing({ onGetStarted, onSignIn }) {
           <p>One plan per company, tailored to how many properties you manage. Start with a 14-day free trial — no payment details needed up front, and no fixed monthly billing cycle required.</p>
           <button className="btn btn-primary" onClick={onGetStarted}>Start free trial</button>
         </div>
+      </section>
+
+      <section className="landing-contact">
+        <div className="landing-section-header">
+          <h2>Get in touch</h2>
+          <p>Have a question before you start? Send us a message and we'll get back to you.</p>
+        </div>
+        <ContactForm />
       </section>
 
       <footer className="landing-footer">

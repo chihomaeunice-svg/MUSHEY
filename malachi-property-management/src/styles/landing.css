@@ -442,6 +442,64 @@
   margin-bottom: 22px;
 }
 
+/* ── Floating WhatsApp button ── */
+.whatsapp-floating {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #25D366;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  z-index: 50;
+  transition: transform 0.15s ease;
+}
+.whatsapp-floating:hover { transform: scale(1.08); }
+
+/* ── Contact form ── */
+.landing-contact {
+  padding: 80px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.landing-contact-form {
+  max-width: 480px;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: var(--shadow);
+}
+
+.landing-contact-form textarea { resize: vertical; }
+
+.landing-contact-thanks {
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 40px 32px;
+  box-shadow: var(--shadow);
+  color: var(--accent);
+}
+
+.landing-contact-thanks p {
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+  margin-top: 12px;
+}
+
 /* ── Footer ── */
 .landing-footer {
   display: flex;
@@ -472,5 +530,7 @@
   .landing-nav-actions { gap: 8px; }
   .landing-features { padding: 56px 20px; }
   .landing-pricing { padding: 56px 20px; }
+  .landing-contact { padding: 56px 20px; }
+  .whatsapp-floating { bottom: 16px; right: 16px; width: 50px; height: 50px; }
   .landing-footer { padding: 20px; flex-direction: column; gap: 10px; text-align: center; }
 }
