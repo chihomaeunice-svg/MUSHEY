@@ -26,16 +26,18 @@ export default function ThemeToggle({ className = "" }) {
         className={theme === "light" ? "active" : ""}
         onClick={() => choose("light")}
         aria-pressed={theme === "light"}
+        aria-label="Light theme"
       >
-        <Sun size={13} weight="fill" /> Light
+        <Sun size={13} weight="fill" /> <span className="theme-toggle-label">Light</span>
       </button>
       <button
         type="button"
         className={theme === "dark" ? "active" : ""}
         onClick={() => choose("dark")}
         aria-pressed={theme === "dark"}
+        aria-label="Dark theme"
       >
-        <Moon size={13} weight="fill" /> Dark
+        <Moon size={13} weight="fill" /> <span className="theme-toggle-label">Dark</span>
       </button>
     </div>
   );

@@ -29,3 +29,10 @@
 .theme-toggle button:hover:not(.active) {
   color: var(--text);
 }
+
+/* Icon-only on narrow screens — the full "Light"/"Dark" text labels are
+   what pushed the landing nav wider than the viewport on mobile. */
+@media (max-width: 480px) {
+  .theme-toggle-label { display: none; }
+  .theme-toggle button { padding: 7px 9px; }
+}

@@ -3,6 +3,7 @@
 .landing {
   background: var(--bg);
   color: var(--text);
+  overflow-x: hidden;
 }
 
 /* ── Nav ── */
@@ -11,6 +12,8 @@
   top: 0;
   z-index: 20;
   display: flex;
+  flex-wrap: wrap;
+  row-gap: 10px;
   align-items: center;
   justify-content: space-between;
   padding: 16px 40px;
@@ -25,6 +28,7 @@
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 15px;
+  white-space: nowrap;
 }
 
 .landing-nav-logo {
@@ -41,6 +45,8 @@
 
 .landing-nav-actions {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
   gap: 12px;
 }
