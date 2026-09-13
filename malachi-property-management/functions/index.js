@@ -98,6 +98,17 @@ exports.dailyNotifications = onSchedule(
                 message: `Habari ${p.tenantName || ""}, mkataba wako wa ${p.propertyName} unaisha ${p.contractEnd} (siku ${daysLeft} zilizobaki). Wasiliana na mwenye nyumba.`,
               });
             }
+            if (p.tenantEmail) {
+              await sendEmail({
+                to: p.tenantEmail,
+                subject: triggerDay === 1
+                  ? `Mkataba wako unaisha kesho — ${p.propertyName}`
+                  : `Mkataba wako unaisha baada ya siku ${triggerDay} — ${p.propertyName}`,
+                html: `<p>Habari ${p.tenantName || ""},</p>
+                       <p>Mkataba wako wa <b>${p.propertyName}</b> (${p.area}) unaisha tarehe <b>${p.contractEnd}</b>
+                       (siku ${daysLeft} zilizobaki). Tafadhali wasiliana na mwenye nyumba kuhusu upyaji.</p>`,
+              });
+            }
             log[`sent_${triggerDay}d`] = today.toISOString();
             updated = true;
           }
@@ -122,6 +133,15 @@ exports.dailyNotifications = onSchedule(
                 message: `Kumbusho: kodi ya ${p.propertyName} bado haijalipwa mwezi huu. Kiasi: ${Number(p.rent || 0).toLocaleString()} TZS.`,
               });
             }
+            if (p.tenantEmail) {
+              await sendEmail({
+                to: p.tenantEmail,
+                subject: `Kumbusho la malipo ya kodi — ${p.propertyName}`,
+                html: `<p>Habari ${p.tenantName || ""},</p>
+                       <p>Kodi ya <b>${p.propertyName}</b> (${p.area}) bado haijalipwa mwezi huu.</p>
+                       <p>Kiasi: <b>${Number(p.rent || 0).toLocaleString()} TZS</b>.</p>`,
+              });
+            }
             log[mKey] = today.toISOString();
             updated = true;
           }
@@ -143,15 +163,29 @@ exports.onRentPaid = onDocumentUpdated(
 
     const companySnap = await db.doc(`companies/${event.params.companyId}`).get();
     const notifyEmail = companySnap.data()?.notifyEmail;
-    if (!notifyEmail) return;
 
-    await sendEmail({
-      to: notifyEmail,
-      subject: `Rent paid in full — ${after.tenantName || "Tenant"} (${after.propertyName})`,
-      html: `<p>Rent for <b>${after.propertyName}</b> (${after.area}), tenant <b>${after.tenantName || "Unknown"}</b>,
-             has been marked as fully paid.</p>
-             <p>Amount: <b>${Number(after.rent || 0).toLocaleString()} TZS</b>.</p>`,
-    });
+    // Landlord, tenant SMS, and tenant email are three independent
+    // recipients — a landlord without notifyEmail set shouldn't also
+    // silently block the tenant's own confirmation.
+    if (notifyEmail) {
+      await sendEmail({
+        to: notifyEmail,
+        subject: `Rent paid in full — ${after.tenantName || "Tenant"} (${after.propertyName})`,
+        html: `<p>Rent for <b>${after.propertyName}</b> (${after.area}), tenant <b>${after.tenantName || "Unknown"}</b>,
+               has been marked as fully paid.</p>
+               <p>Amount: <b>${Number(after.rent || 0).toLocaleString()} TZS</b>.</p>`,
+      });
+    }
+
+    if (after.tenantEmail) {
+      await sendEmail({
+        to: after.tenantEmail,
+        subject: `Asante — malipo yamepokelewa (${after.propertyName})`,
+        html: `<p>Asante ${after.tenantName || ""}!</p>
+               <p>Malipo ya kodi ya <b>${after.propertyName}</b> yamepokelewa.</p>
+               <p>Kiasi: <b>${Number(after.rent || 0).toLocaleString()} TZS</b>.</p>`,
+      });
+    }
 
     if (after.phone) {
       await sendSms({

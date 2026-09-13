@@ -18,7 +18,7 @@ const ID_TYPES = ["National ID", "Passport", "Voter ID", "Driving License"];
 
 const emptyForm = {
   area: "", type: "", propertyName: "", status: "occupied", tenantName: "",
-  rent: "", rentFrequency: "monthly", contractStart: "", contractEnd: "", phone: "", notes: "",
+  rent: "", rentFrequency: "monthly", contractStart: "", contractEnd: "", phone: "", tenantEmail: "", notes: "",
   idType: "", idNumber: "", idPhotoUrl: "",
   cleaningIncluded: false, cleaningFee: "",
   waterIncluded: false, waterFee: "",
@@ -44,6 +44,9 @@ function validateForm(form) {
   }
   if (form.phone && !/^[0-9+()\s-]{7,}$/.test(form.phone)) {
     errors.push("Phone number looks invalid — use digits only (e.g. 0712345678).");
+  }
+  if (form.tenantEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.tenantEmail)) {
+    errors.push("Tenant email looks invalid.");
   }
   return errors;
 }
@@ -104,7 +107,7 @@ function Properties({ setCurrentPage }) {
       status: p.status || "occupied",
       tenantName: p.tenantName, rent: p.rent, rentFrequency: p.rentFrequency || "monthly",
       contractStart: p.contractStart, contractEnd: p.contractEnd,
-      phone: p.phone || "", notes: p.notes || "",
+      phone: p.phone || "", tenantEmail: p.tenantEmail || "", notes: p.notes || "",
       idType: p.idType || "", idNumber: p.idNumber || "", idPhotoUrl: p.idPhotoUrl || "",
       cleaningIncluded: !!p.cleaningIncluded, cleaningFee: p.cleaningFee || "",
       waterIncluded: !!p.waterIncluded, waterFee: p.waterFee || "",
@@ -135,6 +138,7 @@ function Properties({ setCurrentPage }) {
         contractStart: form.status === "vacant" ? "" : form.contractStart,
         contractEnd: form.status === "vacant" ? "" : form.contractEnd,
         phone: form.status === "vacant" ? "" : form.phone,
+        tenantEmail: form.status === "vacant" ? "" : form.tenantEmail,
         notes: form.notes,
         idType: form.idType,
         idNumber: form.idNumber,
@@ -443,6 +447,21 @@ function Properties({ setCurrentPage }) {
                         value={form.phone}
                         onChange={(e) => set("phone", e.target.value)}
                       />
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group" style={{ gridColumn: "1 / -1" }}>
+                      <label>Tenant Email (optional)</label>
+                      <input
+                        type="email"
+                        placeholder="tenant@example.com"
+                        value={form.tenantEmail}
+                        onChange={(e) => set("tenantEmail", e.target.value)}
+                      />
+                      <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
+                        If set, the tenant gets rent-due and contract-expiry reminder emails too — not just SMS.
+                      </p>
                     </div>
                   </div>
 
