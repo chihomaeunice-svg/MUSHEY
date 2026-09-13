@@ -11,12 +11,12 @@ import { parseCsv, downloadCsv } from "../utils/csv";
 import { FREQUENCIES } from "../utils/billing";
 
 const TEMPLATE_HEADERS = [
-  "Area", "Type", "Property Name", "Status", "Tenant Name", "Phone",
+  "Area", "Type", "Property Name", "Status", "Tenant Name", "Phone", "Tenant Email",
   "Rent", "Rent Frequency", "Contract Start", "Contract End", "ID Type", "ID Number", "Notes",
 ];
 
 const TEMPLATE_EXAMPLE = [
-  "Kinondoni", "House", "House 12", "occupied", "Amina Juma", "0712345678",
+  "Kinondoni", "House", "House 12", "occupied", "Amina Juma", "0712345678", "",
   "250000", "monthly", "2026-01-01", "2026-12-31", "National ID", "1990-1-2-345678", "",
 ];
 
@@ -34,6 +34,8 @@ const FIELD_BY_HEADER = {
   tenant: "tenantName",
   phone: "phone",
   phonenumber: "phone",
+  tenantemail: "tenantEmail",
+  email: "tenantEmail",
   rent: "rent",
   monthlyrent: "rent",
   rentfrequency: "rentFrequency",
@@ -106,6 +108,7 @@ function parseRows(text) {
         contractStart: status === "vacant" ? "" : (raw.contractStart || ""),
         contractEnd: status === "vacant" ? "" : (raw.contractEnd || ""),
         phone: status === "vacant" ? "" : (raw.phone || ""),
+        tenantEmail: status === "vacant" ? "" : (raw.tenantEmail || ""),
         notes: raw.notes || "",
         idType: raw.idType || "",
         idNumber: raw.idNumber || "",
