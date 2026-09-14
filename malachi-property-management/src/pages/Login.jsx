@@ -46,16 +46,12 @@ export default function Login({ onSwitchToSignup, onBack }) {
     setResetError("");
     setResetLoading(true);
     try {
+      // requestPasswordReset always resolves, whether or not the email is
+      // registered — enumeration-safety is handled server-side now.
       await resetPassword(resetEmail);
       setResetSent(true);
     } catch (err) {
-      // Don't reveal whether an email is registered — treat "not found" the
-      // same as success so this can't be used to enumerate accounts.
-      if (err.code === "auth/user-not-found") {
-        setResetSent(true);
-      } else {
-        setResetError(err.message);
-      }
+      setResetError(err.message);
     } finally {
       setResetLoading(false);
     }

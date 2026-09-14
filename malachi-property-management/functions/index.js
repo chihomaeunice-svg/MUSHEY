@@ -19,6 +19,7 @@ const otp = require("./otp");
 const backup = require("./backup");
 const staff = require("./staff");
 const inquiries = require("./inquiries");
+const passwordReset = require("./passwordReset");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -246,4 +247,9 @@ exports.removeStaffMember = onCall(async (request) => {
 /** Public: the Landing page "get in touch" form — no sign-in required. */
 exports.submitInquiry = onCall({ secrets: EMAIL_SECRETS }, async (request) => {
   return inquiries.submitInquiry(db, request.data);
+});
+
+/** Public: forgot-password, sent via our own branded email instead of Firebase Auth's default template. */
+exports.requestPasswordReset = onCall({ secrets: EMAIL_SECRETS }, async (request) => {
+  return passwordReset.requestPasswordReset(db, request.data);
 });
