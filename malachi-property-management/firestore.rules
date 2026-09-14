@@ -114,5 +114,11 @@ service cloud.firestore {
     match /inquiries/{doc} {
       allow read, write: if false;
     }
+
+    // Forgot-password resend cooldown, keyed by email — only the
+    // requestPasswordReset Cloud Function (Admin SDK) touches this.
+    match /passwordResetRequests/{doc} {
+      allow read, write: if false;
+    }
   }
 }

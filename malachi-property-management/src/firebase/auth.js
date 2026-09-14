@@ -5,9 +5,9 @@ import {
   signOut,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
-  sendPasswordResetEmail,
 } from "firebase/auth";
-import { app } from "./firebaseConfig";
+import { httpsCallable } from "firebase/functions";
+import { app, functions } from "./firebaseConfig";
 
 export const auth = getAuth(app);
 
@@ -18,12 +18,19 @@ export const login = (email, password) =>
   signInWithEmailAndPassword(auth, email, password);
 
 /**
- * Send a password reset email — handled entirely by Firebase Auth itself
- * (the link, the reset page, and the actual password change), no custom
- * backend or email provider involved.
+ * Request a password reset — routed through our own requestPasswordReset
+ * Cloud Function (functions/passwordReset.js) instead of Firebase Auth's
+ * client-side sendPasswordResetEmail, so the email itself is our own
+ * branded template (matching the OTP/staff-invite emails) instead of
+ * Firebase's generic default. The actual reset link and reset page are
+ * still Firebase Auth's own — only the email delivery is custom.
+ * Always resolves, regardless of whether the email is registered, so this
+ * can't be used to enumerate accounts.
  */
-export const resetPassword = (email) =>
-  sendPasswordResetEmail(auth, email);
+export const resetPassword = async (email) => {
+  const call = httpsCallable(functions, "requestPasswordReset");
+  await call({ email });
+};
 
 /**
  * Sign out the current user
